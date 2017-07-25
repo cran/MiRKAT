@@ -1,0 +1,19 @@
+Package: MiRKAT
+Version: 1.0
+Date: 2017-07-25
+Title: Microbiome Regression-Based Kernel Association Test
+Authors@R: c(person("Haotian", "Zheng", role = c("aut"),
+                    email = "ht-zh14@mails.tsighua.edu.cn"),
+             person("Xiang", "Zhan", role = "aut"),
+             person("Anna", "Plantinga", role = "aut"),
+             person("Michael", "Wu", role = "aut"),
+             person("Ni", "Zhao", role = c("aut", "cre"), email = "nzhao10@jhu.edu"))
+Author: Haotian Zheng [aut], Xiang Zhan [aut], Anna Plantinga [aut], Michael Wu [aut], Ni Zhao [aut, cre]
+Maintainer: Ni Zhao <nzhao10@jhu.edu>
+Depends: R (>= 2.13.0), survival, PearsonDS, GUniFrac, MASS
+Description: Test for overall association between microbiome composition data with a continuous or dichotomous outcome via phylogenetic kernels. The phenotype can be univariate continuous or binary phenotypes (Zhao et al. (2015) <doi:10.1016/j.ajhg.2015.04.003>), survival outcomes (Plantinga et al. (2017) <doi:10.1186/s40168-017-0239-9>), multivariate (Zhan et al. (2017) <doi:10.1002/gepi.22030>) and structured phenotypes (Zhan et al. (2017) <doi:10.1111/biom.12684>). For all these effect, the microbiome community effect was modeled nonparametrically through a kernel function, which can incorporate the phylogenetic tree information.
+License: GPL (>= 2)
+NeedsCompilation: yes
+Packaged: 2017-07-25 20:54:07 UTC; dell
+Repository: CRAN
+Date/Publication: 2017-07-25 21:52:56 UTC
