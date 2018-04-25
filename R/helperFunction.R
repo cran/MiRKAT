@@ -6,7 +6,7 @@ permuted.index = function (n){
 }
 
 getQ = function(K, res, s2){    
-  Q = 1/s2*res %*% K %*% res
+  Q = c(1 / s2 * res %*% K %*% res)
 }
 
 getLambda_davies = function(K, P0){
@@ -20,11 +20,11 @@ getindivP_davies = function(Q, lambda0, n, px){
   
   if (length(lambda0) >= n-px){ 
     # In fact, it can not go bigger than n-p because P0 has rank n-p
-    lambda = c(lambda0 - Q/(n-px))
+    lambda = c(lambda0 - c(Q)/(n-px))
     k = length(lambda)
     h = rep(1,k)
   }else{
-    lambda = c(lambda0 - Q/(n-px), -Q/(n-px))
+    lambda = c(lambda0 - c(Q)/(n-px), c(-Q)/(n-px))
     k = length(lambda0)
     h = c(rep(1, k), n-px - k)
   }
