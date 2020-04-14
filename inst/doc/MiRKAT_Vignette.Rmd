@@ -1,0 +1,369 @@
+---
+title: "MiRKAT Package Vignette"
+author: Anna Plantinga, Nehemiah Wilson, Haotian Zheng, Xiang Zhan, Michael Wu, Jun Chen, Ni Zhao
+date: \today 
+output: rmarkdown::html_vignette
+vignette: > 
+  %\VignetteIndexEntry{MiRKAT Package Vignette} 
+  %\VignetteEngine{knitr::rmarkdown} 
+  \usepackage[utf8]{inputenc}
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load-packages, echo=FALSE}
+library(MiRKAT, quietly = TRUE)
+library(GUniFrac, quietly = TRUE)
+library(vegan, quietly = TRUE)
+library(cluster); library(CompQuadForm); library(dirmult); library(lme4); library(MASS)
+library(Matrix); library(survival); library(permute); library(propr)
+library(tidyverse); library(kableExtra)
+``` 
+
+## Overview
+
+The MiRKAT package (v1.1.0) contains functions that test global associations between the microbiota and different types of phenotypes, such as univariate continuous or binary phenotypes, survival (censored time-to-event) outcomes, longitudinal data, multivariate, and structured phenotypes. For all these effects, the microbiome community effect is modeled nonparametrically through a kernel function, which can incorporate the phylogenetic tree information.
+
+### Changes from v1.0.1
+
+Four additional functions have beeen added to the package in version 1.1.0. They are MiRKAT.R (robust linear regression), MiRKAT.Q (quantile regression), GLMMMiRKAT (for correlated outcome data), and CSKAT (an alternative to GLMMMiRKAT for correlated Gaussian outcomes, utilizing the Davies approximation to calculate the p-value computationally). In addition, measures of effect size (the KRV statistic and R-squared) have been added to most functions. 
+
+### Dependencies 
+
+The following packages are required for functions and examples in the MiRKAT package: MASS, GUniFrac, CompQuadForm, quantreg, PearsonDS, propr, lme4, Matrix, permute, survival, and stats. All of these required packages are available on CRAN. 
+
+## MiRKAT: Microbiome Regression-Based Kernel Association Test
+
+We begin by demonstrating the use of the Microbiome Regression-Based Kernel Association Test (MiRKAT) for binary and continuous traits. 
+
+### Example Dataset
+
+We use the throat microbiome data (Charlson et al 2010) from the package GUniFrac to demonstrate our methods. Data are available for 60 subjects, of whom 28 were smokers and 32 were nonsmokers. Microbiome data were collected from right and left nasopharynx and oropharynx regions to form an OTU table with 856 OTUs. We want to evaluate whether smoking is associated with differences in microbiome composition in the upper respiratory tract, taking into consideration additional covariates including gender and antibiotic use within 3 months. We also use simulated data based on the throat dataset to demonstrate the usage of MiRKAT-S, MMiRKAT, MiRKAT.R, MiRKAT.Q, and KRV.
+
+```{r}
+data("throat.otu.tab")
+data("throat.meta")
+data("throat.tree")
+```
+  
+### Data Preparation 
+
+```{r}
+Male <- as.numeric(throat.meta$Sex == "Male")
+Smoker <- as.numeric(throat.meta$SmokingStatus == "Smoker")
+anti <- as.numeric(throat.meta$AntibioticUsePast3Months_TimeFromAntibioticUsage != "None")
+covar <- cbind(Male, anti)
+```
+
+### Create the UniFrac Distances
+
+```{r}
+# Note: may want to rarefy the data to the minimum sequencing depth for unweighted (presence/absence) distances 
+## otu.tab.rff <- Rarefy(throat.otu.tab)$otu.tab.rff
+unifracs <- GUniFrac(throat.otu.tab, throat.tree, alpha = c(0, 0.5, 1))$unifracs
+D.weighted = unifracs[,,"d_1"]
+D.unweighted = unifracs[,,"d_UW"]
+D.generalized = unifracs[,,"d_0.5"]
+D.BC = as.matrix(vegdist(throat.otu.tab, method="bray"))
+```
+
+### Convert Distance to Kernel Matrices
+
+The D2K function in MiRKAT converts distance matrices to kernel matrices via the transformation 
+$$K = -\frac{1}{2} \left(I - \frac{1 1'}{n}\right) D^2 \left(I - \frac{1 1'}{n}\right)$$
+Here, $I$ is the identity matrix and $1$ is an $n$-vector of ones. To ensure that $K$ is positive semi-definite, we replace negative eigenvalues with zero. That is, we perform an eigenvalue decomposition $K = U \Lambda U$, where $\Lambda = \text{diag}(\lambda_1,...,\lambda_n)$, and then reconstruct the kernel matrix using the non-negative eigenvalues $\Lambda^* = \text{diag}(\text{max}(\lambda_1,0),...,\text{max}(\lambda_n,0))$ so that $K = U \Lambda^* U$. 
+
+```{r}
+K.weighted = D2K(D.weighted)
+K.unweighted = D2K(D.unweighted)
+K.generalized = D2K(D.generalized)
+K.BC = D2K(D.BC)
+```
+
+### Testing Using a Single Kernel
+
+```{r}
+MiRKAT(y = Smoker, X = covar, Ks = K.weighted, out_type = "D", 
+       method = "davies", returnKRV = TRUE, returnR2 = TRUE)
+```
+
+"Method" indicates which method the function should use to compute the **kernel-specific p-value**. "davies" represents an exact method that computes the p-value by inverting the characteristic function of the mixture chi-square distribution. We adopt an exact variance component test because most of the studies concerning microbiome compositions have modest sample size. "permutation" represents a residual permutation approach. "moment" represents an approximation method that matches the first two moments. When out_type="C" (continuous outcome y), the "moment" method is the Satterthwaite approximation. When out_type = "D" (dichotomous outcome), the "moment" method is the small sample adjustment in Lee et al (2012). When sample size is modest ($n<100$ for continuous or $n<200$ for dichotomous outcome), the "moment" method can be inflated at very small size (such as $\alpha$ = 0.001), although the type I error at $\alpha$ = 0.05 is usually sustained. Therefore, we suggest using the Davies or permutation approaches for such situations.
+
+### Measures of Effect Size 
+
+If returnKRV = TRUE and/or returnR2 = TRUE, the function also returns measures of effect size KRV and $R^2$ (respectively). The KRV statistic is as described in However, we caution that these measures of effect size remain very small (on the order of 1e-4 or smaller for the KRV statistic, and generally $<0.1$ for R-squared) even when the majority of the variability in the outcome is explainable by the microbiome. Hence this should be used for internal comparisons rather than external discussions of, e.g., percent variability explained.  
+
+### Properties of Different Kernels 
+
+How to choose an appropriate distance matrix and kernel for testing is a difficult question. However, it is important, since the distance matrix used to generate the kernel strongly affects the power of our tests. In particular, MiRKAT has highest power when the form of association between the microbiota and the outcome assumed by the kernel matches the true form of association. Poor choice of kernel will lead to reduced power, although the type I error will be preserved. 
+
+In the case of the UniFrac families and the Bray-Curtis dissimilarity, the factors at play are (1) the abundance of the associated taxa and (2) whether closely related taxa (phylogenetically) tend to be related or not related to the outcome as a group. For example, the following are some of the distance metrics that have been used for studies of the microbiome: 
+
+```{r, echo=FALSE}
+mytab = matrix(NA, nrow = 6, ncol = 5) 
+mytab[1,] = c("Distance", "Phylogeny?", "Abundance?", "Other notes", "References") 
+mytab[2,] = c("Unweighted UniFrac", "Yes", "No" , "", "1") 
+mytab[3,] = c("Weighted UniFrac", "Yes", "Yes", "", "2") 
+mytab[4,] = c("Generalized UniFrac", "Yes", "(Yes)", "Parameter alpha defines extent to which abundance is taken into account", "3") 
+mytab[5,] = c("Jaccard", "No", "No", "1 - (taxa in both)/(taxa in either); typically presence/absence, but can be extended to an abundance-weighted version", "4,5") 
+mytab[6,] = c("Bray-Curtis", "No", "Yes", "Similar to Jaccard, but uses counts", "6")
+
+kable(mytab, booktabs=TRUE) %>% 
+  column_spec(4, width="20em") 
+```
+\begin{tabu} to \hsize{X[0.4,c]X[0.4,c]X[0.5,c]XX[0.4,c]}
+\toprule
+Distance & Phylogeny? & Abundance? & Other notes & Reference\\
+\midrule
+Unweighted UniFrac & Yes & No &   & 1\\
+Weighted UniFrac & Yes & Yes &   & 2\\
+Generalized UniFrac & Yes & (Yes) & Parameter alpha defines extent to which abundance is taken into account & 3\\
+Jaccard & No & No & 1 - (taxa in both)/(taxa in either); typically presence/absence, but can be extended to an abundance-weighted version & 4,5\\
+Bray-Curtis & No & Yes & Similar to Jaccard, but uses counts & 6\\
+\bottomrule
+\end{tabu} 
+
+In the table above, "Yes" indicates the distance or dissimilarity metric has the feature; "(Yes)" indicates that the feature is present either in some variations of the metric or is present to some extent; and "No" indicates that the feature is not present. 
+
+Depending on which of these characteristics are expected to be present in a particular study (based on prior knowledge or intuition), an appropriate distance or dissimilarity can be selected. If the study is exploratory and strong protection of type 1 error is not needed, several distance metrics can be explored. Depending on which one(s) are highly significant, some information can be gained about the nature of any association between the microbiota and the outcome. 
+
+### Testing Using Multiple Kernels
+
+We provide an omnibus test that takes into account multiple kernels simultaneously. The method is robust in the sense that it has substantial power gain compared to when an improper kernel is used, and has little power loss compared to when the best kernel is used.
+  
+
+```{r}
+Ks = list(K.weighted = K.weighted, K.unweighted = K.unweighted, K.BC = K.BC)
+MiRKAT(y = Smoker, Ks = Ks, X = covar, out_type = "D", 
+       method = "davies", returnKRV = TRUE, returnR2 = TRUE)
+```
+  
+### Testing with a Continuous Outcome Variable
+
+The only difference between using a continuous and dichotomous outcome variable is the value of the argument "out_type", as shown below. 
+
+```{r}
+y <- rnorm(nrow(K.weighted))
+MiRKAT(y = y, Ks = Ks, X = covar, out_type = "C", nperm = 999, 
+       method = "davies", returnKRV = TRUE, returnR2 = TRUE)
+```
+
+This function outputs p-values for association using each single kernel and an omnibus p-value considering all kernels. The omnibus p-value is obtained through residual permutation where the minimum p-values from each of the individual tests are used as test statistics. As before, the "method" option only indicates the method that is used for generating individual kernel p-values. 
+  
+
+## MiRKAT-S: Survival Outcome
+
+### Simulate time to event data
+
+We again use Charlson's throat microbiome data to demonstrate the use of MiRKAT-S. Data loading and preparation are the same as in the previous section. Because the original dataset has a binary phenotype (smoking) rather than a measure of censored time to event outcomes, we consider smoking status and gender as covariates and generate null outcome data from the Exponential distribution. Specifically, we generate survival times as $S \sim \text{Exponential}(1 + I(\text{smoke}) + I(\text{male}))$, and censoring times as $C \sim \text{Exponential}(0.75)$. Then the observed outcome measures are observation time $T = \text{min}(S, C)$ and an indicator variable for whether the event was observed, $\Delta = I(S \leq C)$. That is, when delta = 1, the corresponding "obstime" is the survival time, and when delta = 0, the corresponding observation is censored and "obstime" is the time of censoring. This simulation procedure results in approximately 33\% censoring.
+
+```{r}
+# Simulate outcomes
+# Here, outcome is associated with covariates but unassociated with microbiota
+# Approximately 33% censoring
+SurvTime <- rexp(60, (1 + Smoker + Male))
+CensTime <- rexp(60, 0.75)
+Delta <- as.numeric(SurvTime <= CensTime )
+ObsTime <- pmin(SurvTime, CensTime)
+```
+
+The p-value for the test may be generated using permutation or Davies' exact method. Davies’ exact method, which computes the p-value based on a mixture of chi-square distributions, is used when "perm = F". We use a small-sample correction to account for the modest sample sizes and sparse OTU count matrices that often result from studies of the microbiome.
+
+```{r}
+# Davies' exact method 
+MiRKATS(obstime = ObsTime, delta = Delta, X = cbind(Smoker, Male, anti), Ks = Ks, 
+        perm = F, returnKRV = T, returnR2 = T)
+```
+
+Using "perm = T" indicates that a permutation p-value should be calculated. Overall, permutation is recommended when the sample size is small, as Davies' method may be slightly anti-conservative with very small sample sizes. MiRKAT-S will generate a warning when permutation is not used for sample sizes $n \leq 50$. "nperm" indicates the number of permutations to perform to generate the p-value (default = 1000)
+
+```{r}
+# Permutation 
+MiRKATS(obstime = ObsTime, delta = Delta, X = cbind(Smoker, Male, anti), Ks = Ks, 
+        perm = T, returnKRV = T, returnR2 = T)
+```
+
+The omnibus p-value is similar to that of MiRKAT, in which residual permutation is used to create a null distribution of p-values, and the minimum p-value from the original MiRKAT-S analysis is tested against this distribution as the test statistic of the omnibus test. The omnibus test is described further at https://github.com/hk1785/OMiSA (Koh 2018, DOI: https://doi.org/10.1186/s12864-018-4599-8). 
+
+  
+## MMiRKAT: Multivariate Continuous Outcome
+
+MMiRKAT is designed to test the association between the microbiome and a low-dimensional multivariate continuous outcome. For structured or high dimensional outcomes, the kernel RV test (KRV) is recommended instead, as demonstrated in the next section. 
+
+We again use Charlson's throat microbiome data to demonstrate the use of MMiRKAT. We generate multivariate outcomes $Y \sim N_{3n}(0, I_{3n})$. 
+
+MMiRKAT uses a small-sample correction procedure for p-value calculation. There is no omnibus test in MMiRKAT; only kernel-specific p-values and, optionally, the KRV and R-squared statistics are returned. 
+
+```{r}
+set.seed(1)
+n <- nrow(throat.otu.tab)
+Y <- matrix(rnorm(n*3, 0, 1), n, 3)
+MMiRKAT(Y = Y, X = cbind(Male, anti), Ks = Ks, 
+        returnKRV = TRUE, returnR2 = TRUE)
+```
+
+## KRV: High-Dimensional Structured Outcome
+
+KRV (kernel RV coefficient) is designed to evaluate the association between microbiome composition and a structured, potentially high-dimensional phenotype, such as gene expression of a set of genes which are functionally related. The KRV statistic can capture nonlinear associations and complex relationships within the individual data types and between the complex multivariate phenotype and microbiome composition by measuring general dependency. 
+
+Two kernels are involved in KRV statistics: one kernel for microbiome composition, which can be obtained by transforming the distance metrics as in the previous sections, and one kernel capturing similarities in the phenotypes. As an alternative, KRV can also take as input a kernel matrix for microbiome composition, a multivariate phenotype y, and a set of additional covariates X. In this case, a multivariate regression is carried out, and then the residuals of this regression are subsequently used to construct a Gaussian or linear kernel matrix.
+  
+### Create the Kernel Matrix of Simulated Data
+
+```{r}
+set.seed(1)
+rho = 0.2
+Va = matrix(rep(rho, (2*n)^2), 2*n, 2*n)+diag(1-rho, 2*n)
+G = mvrnorm(n, rep(0, 2*n), Va)
+```
+
+### Testing Using an Outcome Kernel Matrix
+
+```{r}
+lin.K.y = G %*% t(G)
+KRV(kernels.otu = Ks, kernel.y = lin.K.y, 
+    returnKRV = TRUE, returnR2 = TRUE)
+```
+
+### Testing with Multiple Kernels, Using the Covariate Option
+
+```{r}
+KRV(y = G, X = cbind(Male, anti), kernels.otu = Ks, kernel.y = "linear")
+```
+
+An omnibus test has also been implemented for the KRV function.  This omnibus test is different from the other omnibus tests in the package, as it creates an "omnibus kernel matrix" and then performs the KRV analysis on that omnibus kernel. The omnibus kernel matrix is constructed via the second formulation in Zhan et al (2017), an unsupervised weighted combination of kernels that the authors found to have the best performance across a range of simulation settings. Specifically, the omnibus kernel is defined as $$K_{om} = \sum_{i=1}^m \frac{K_i}{tr(K_i)}.$$ The p-value from this single omnibus kernel is returned as the omnibus p-value for KRV.
+
+## Robust MiRKAT
+
+MiRKAT is sensitive to strong skewness or outliers in continuous outcome variables, but many biological features have non-Gaussian distributions. To accommodate such features, rather than using OLS, robust MiRKAT uses a robust regression method. Specifically, a kernel matrix for the outcome is created using a linear kernel based on the residuals from robust linear regression (MiRKAT-R) or quantile regression (MiRKAT-Q) of the outcome on non-microbiome covariates, then related to the microbiome kernel using the KRV test. Note that if there are no additional covariates, MiRKAT-R and MiRKAT-Q simplify to MiRKAT. 
+
+We additionally note that quantile regression has lower power than robust regression in every scenario considered, and hence recommend use of MiRKAT-R in most circumstances. Both functions call the KRV function once an outcome kernel matrix has been created using quantile or robust regression, so the omnibus tests for MiRKAT.Q and MiRKAT.R are the same as for KRV.
+  
+### MiRKAT.R: Continuous Outcomes with Robust Linear Regression
+
+```{r}
+y <- rchisq(nrow(K.weighted), 1)
+MiRKAT.R(y = y, X = cbind(Male, anti), Ks = Ks)
+```
+
+
+### MiRKAT.Q: Continuous Outcomes with Quantile Regression
+
+```{r}
+MiRKAT.Q(y = y, X= cbind(Male, anti), Ks = Ks)
+```
+
+
+## CSKAT: Longitudinal/Correlated Data, Continuous Outcomes
+
+CSKAT is designed to allow for microbiome association testing using longitudinal or otherwise correlated data. It is sometimes useful to look for micriobiome association not from single measurements of many people, but rather from measuring only a select few people multiple times across a longer time period. This case-study-like approach allows researchers to do things like track the effectiveness of a certain drug on a group of patients. It also allows researchers to do microbiome association testing on family members, so as to lessen the confounding effects of DNA. In both scenarios, the assumption of independence that all the above functions require is not met. CSKAT allows for microbiome association testing despite this dependence. 
+
+We switch to a different simulation approach for these last two functions, as they both deal with correlated data.
+
+### Prepare the Data
+
+```{r}
+# Import example microbiome data with Gaussian traits
+data(nordata)
+
+# Extract microbiome and meta information
+otu.tab <- nordata$nor.otu.tab
+tree <- nordata$nor.tree
+meta <- nordata$nor.meta
+```
+
+### Create the UniFrac Distances
+
+```{r}
+Ds <- GUniFrac(otu.tab, tree, alpha=c(0.5, 1))$unifracs
+ 
+D.unweighted <- Ds[,,"d_UW"]
+D.generalized <- Ds[,,"d_0.5"]
+D.weighted <- Ds[,,"d_1"]
+```
+ 
+### Convert Distance to Kernel Matrices
+
+```{r}
+K.unweighted <- D2K(D.unweighted)
+K.generalized <- D2K(D.generalized)
+K.weighted <- D2K(D.weighted)
+Ks <- list(K.weighted = K.weighted, 
+           K.unweighted = K.unweighted, 
+           K.generalized = K.generalized)
+```
+
+
+### Testing Using Multiple Kernels
+
+```{r}
+CSKAT(formula.H0 = y ~ x1 + x2 + (1 | id), data = meta, Ks = Ks)
+```
+
+## GLMM-MiRKAT: Longitudinal/Correlated Continuous, Binary, or Count Data (Generalized Linear Mixed Model)
+
+While CSKAT allows for miciobiome association testing with Gaussian traits (such as body mass index), GLMMMiRKAT allows for Guassian, binomial (e.g. disease status, treatment/placebo) and Poisson (e.g. number of tumors/treatments) traits, making it a much more versatile function overall when it comes to correlated data. 
+
+GLMM-MiRKAT uses a permuation approach for its p-value and omnibus p-value calculations. Because of this, however, it is not as computationally efficient as CSKAT when it comes to Gaussian traits, especially with larger samples. This is because CSKAT uses a computational approach rather than a permuation one, using the Davies function for its p-value calculation. CSKAT is called by GLMM-MiRKAT when GLMM-MiRKAT is given a Gaussian trait and method = "davies".
+
+
+### Example 1. Gaussian traits (e.g., body mass index)
+
+GLMM-MiRKAT returns kernel-specific and omnibus p-values. No measures of effect size are available for GLMM-MiRKAT. 
+ 
+```{r}
+# GLMM-MiRKAT with permutation test
+GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, Ks = Ks, model = "gaussian")
+```
+
+With options model = "gaussian" and method = "davies", GLMM-MiRKAT is equivalent to CSKAT (as described above). 
+
+```{r}
+# GLMM-MiRKAT with Davies p-value (equivalent to CSKAT) 
+GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), Ks = Ks, 
+           id = meta$id, model = "gaussian", method = "davies", 
+           formula.H0 = y ~ cbind(meta$x1, meta$x2) + (1 | meta$id), 
+           slope = FALSE)
+```
+
+
+### Example 2. Binomial traits (e.g., disease status, treatment/placebo)
+ 
+```{r}
+ # Import microbiome data with binomial traits
+ data(bindata)
+
+# Extract microbiome and meta information
+# (Microbiome is the same as for Gaussian outcomes)
+otu.tab <- bindata$bin.otu.tab
+tree <- bindata$bin.tree
+meta <- bindata$bin.meta
+ 
+# Run GLMM-MiRKAT
+GLMMMiRKAT(meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, 
+           Ks = Ks, model = "binomial")
+```
+
+
+### Example 3. Poisson traits (e.g., number of tumors) 
+
+```{r}
+# Import microbiome data with Poisson traits
+data(poisdata)
+
+# Extract microbiome and meta information
+# (Microbiome is again the same)
+otu.tab <- poisdata$pois.otu.tab
+tree <- poisdata$pois.tree
+meta <- poisdata$pois.meta
+
+# Run GLMM-MiRKAT
+GLMMMiRKAT(meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, 
+           Ks = Ks, model = "poisson")
+``` 
+
+

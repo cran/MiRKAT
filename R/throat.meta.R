@@ -1,0 +1,43 @@
+#'Simulated metadata for microbiome regression-based analysis
+#'
+#'Simulation code can be seen in ?KRV
+#'Corresponding OTU matrix is stored in "throat.otu.tab"
+#'
+#'@usage data(throat.meta)
+#'
+#'@format A data frame with 59 rows and 16 columns, rows being participants and columns being different covariates to possibly be
+#'accounted for in any utilized linear models.
+#'
+#'throat.meta is part of a microbiome data set for studying the effect of smoking on the upper respiratory tract microbiome. This data set 
+#'comes from the throat microbiome of left body side. It contains 60 subjects consisting of 32 nonsmokers and 28 smokers.
+#'
+#'
+#'
+#'\describe{
+#' \item{BarcodeSequence}{Sequence of DNA that allows for the identification of the specific species of bacteria. See GUniFrac for 
+#' more details}
+#' \item{LinkerPrimerSequence}{Sequence of DNA that aids in locating the Barcode Sequence. See GUniFrac for more details}
+#' \item{SmokingStatus}{whether or not each patient is a "Smoker" or a "NonSmoker"}
+#' \item{PatientID}{Identifying integer label given to each patient}
+#' \item{SampleIndex}{Labels each patient as being from this particular sample, so as possibly be able to use multiple samples
+#' at once}
+#' \item{AirwaySite}{Part of body where our samples were taken from from in each participant}
+#' \item{SideOfBody}{Which side of the body the samples were taken from}
+#' \item{SampleType}{What kind of sample each one is; should all be patientsamples}
+#' \item{RespiratoryDiseaseStatus_severity_timeframe}{Whether or not the patient has had a respiratory disease, and if so which 
+#' one_severity of said disease_whether or not that disease is still active. If there has been no such disease in the patient's
+#' medical history, the patient's value is "healthy" in this column}
+#' \item{AntibioticUsePast3Months_TimeFromAntibioticUsage}{Whether or not the patient has used antibiotics in the past
+#' month_if so, how long ago it was. If not antibiotics have been used in the past month, the patient's value is "None"
+#' in this column}
+#' \item{Age}{Age of the patient}
+#' \item{Sex}{The sex of the patient}
+#' \item{PackYears}{Unit of measurement measuring the intensity of smoking; average number of packs per day times the number of 
+#' years the patient has been smoking. If patient has never smoked, their value is 0 for this column}
+#' \item{TimeFromLastCig}{Minutes since the patient's last cigarette}
+#' \item{TimeFromLastMeal}{Minutes since the patient's last meal}
+#' \item{Description}{See Charleston paper and other sources}
+#'}
+#'
+#'
+"throat.meta"

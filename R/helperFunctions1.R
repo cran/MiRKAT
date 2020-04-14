@@ -1,0 +1,147 @@
+
+
+# KRV test statistic 
+calcKRVstat <- function(K, L) {
+  n = nrow(K) 
+  I.n=diag(1,n)
+  I.1=rep(1,n)
+  H=I.n-I.1%*%t(I.1)/n
+  K=H%*%K%*%H
+  L=H%*%L%*%H
+  A=K/tr(K%*%K)  ## standard-version of K
+  W=L/tr(L%*%L)
+  Fstar=tr(A%*%W)
+  return(Fstar)
+}
+
+# R-squared 
+calcRsquared <- function(K, L) {
+  r1 <- cor(as.numeric(K), as.numeric(L)) 
+  return(r1^2)
+}
+
+# trace of a matrix 
+tr=function(x){return(sum(diag(x))) }
+
+# permutation matrix 
+getPermuteMatrix <- function(perm, N, strata = NULL) {
+  if (length(perm) == 1) {
+    perm <- how(nperm = perm)
+  }
+  if (!missing(strata) && !is.null(strata)) {
+    if (inherits(perm, "how") && is.null(getBlocks(perm))) 
+      setBlocks(perm) <- strata
+  }
+  if (inherits(perm, "how")) 
+    perm <- shuffleSet(N, control = perm)
+  else {
+    if (!is.integer(perm) && !all(perm == round(perm))) 
+      stop("permutation matrix must be strictly integers: use round()")
+  }
+  if (is.null(attr(perm, "control"))) 
+    attr(perm, "control") <- structure(list(within = list(type = "supplied matrix"), 
+                                            nperm = nrow(perm)), class = "how")
+  perm
+}
+
+
+# For binary outcome 
+getHm = function(Q,muQ, varQ, df){
+  Q_corrected= (Q - muQ)*sqrt(2*df)/sqrt(varQ) + df
+  p = 1 - pchisq(Q_corrected ,df = df)
+  p = ifelse(p<0, 0, p)
+  return(p)
+}
+Get_Var_Elements =function(m4,u1,u2){
+  temp1 = u1^2 * u2^2
+  a1    = sum(m4 * temp1)
+  a2    = sum(u1^2) * sum(u2^2) - sum(temp1)
+  a3    = sum(u1*u2)^2 - sum(temp1)
+  return(a1+a2+2*a3)
+}
+
+
+
+# KAT p-value for CSKAT 
+KAT.pval <- function(Q.all, lambda, acc=1e-9,lim=1e6){
+  pval = rep(0, length(Q.all))
+  i1 = which(is.finite(Q.all))
+  for(i in i1){
+    tmp = davies(Q.all[i],lambda,acc=acc,lim=lim); pval[i] = tmp$Qq
+    if((tmp$ifault>0)|(pval[i]<=0)|(pval[i]>=1)) pval[i] = Sadd.pval(Q.all[i],lambda)
+  }
+  return(pval)
+}
+saddle = function(x,lambda){
+  d = max(lambda)
+  lambda = lambda/d
+  x = x/d
+  k0 = function(zeta) -sum(log(1-2*zeta*lambda))/2
+  kprime0 = function(zeta) sapply(zeta, function(zz) sum(lambda/(1-2*zz*lambda)))
+  kpprime0 = function(zeta) 2*sum(lambda^2/(1-2*zeta*lambda)^2)
+  n = length(lambda)
+  if (any(lambda < 0)) {
+    lmin = max(1/(2 * lambda[lambda < 0])) * 0.99999
+  } else if (x>sum(lambda)){
+    lmin = -0.01
+  } else {
+    lmin = -length(lambda)/(2*x)
+  }
+  lmax = min(1/(2*lambda[lambda>0]))*0.99999
+  hatzeta = uniroot(function(zeta) kprime0(zeta) - x, lower = lmin, upper = lmax, tol = 1e-08)$root
+  w = sign(hatzeta)*sqrt(2*(hatzeta*x-k0(hatzeta)))
+  v = hatzeta*sqrt(kpprime0(hatzeta))
+  if(abs(hatzeta)<1e-4){
+    return(NA)
+  } else{
+    return( pnorm(w+log(v/w)/w, lower.tail=FALSE) )
+  }
+}
+
+Liu.pval = function(Q, lambda){
+  c1 = rep(0,4); for(i in 1:4){ c1[i] = sum(lambda^i) }
+  muQ = c1[1];  sigmaQ = sqrt(2 *c1[2])
+  s1 = c1[3]/c1[2]^(3/2);  s2 = c1[4]/c1[2]^2
+  if(s1^2 > s2){
+    a = 1/(s1 - sqrt(s1^2 - s2));  d = s1 *a^3 - a^2;  l = a^2 - 2*d
+  } else {
+    l = 1/s2;  a = sqrt(l);  d = 0
+  }
+  muX = l+d;  sigmaX = sqrt(2)*a
+  
+  Q.Norm = (Q - muQ)/sigmaQ
+  Q.Norm1 = Q.Norm*sigmaX + muX
+  pchisq(Q.Norm1, df = l,ncp=d, lower.tail=FALSE)
+}
+Sadd.pval = function(Q.all,lambda){
+  sad = rep(1,length(Q.all))
+  if(sum(Q.all>0)>0){
+    sad[Q.all>0] = sapply(Q.all[Q.all>0],saddle,lambda=lambda)
+  }
+  id = which(is.na(sad))
+  if(length(id)>0){
+    sad[id] = Liu.pval(Q.all[id], lambda)
+  }
+  return(sad)
+}
+
+
+# CSKAT 
+sqrt.inv <- function (V2) {
+  eig.obj <- eigen(V2, symmetric = TRUE)
+  vectors <- eig.obj$vectors
+  values <- eig.obj$values
+  ind <- values >= 1e-10
+  values <- values[ind]
+  vectors <- vectors[, ind]
+  temp <- t(vectors) / sqrt(values)
+  Vi <- vectors  %*% temp
+  return(list(Vi=Vi, rank=length(values)))
+}
+
+
+
+
+
+
+

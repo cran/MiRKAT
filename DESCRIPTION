@@ -1,25 +1,40 @@
 Package: MiRKAT
-Version: 1.0.1
-Date: 2018-04-25
-Title: Microbiome Regression-Based Kernel Association Test
-Authors@R: c(person("Haotian", "Zheng", role = c("aut"),
-                    email = "ht-zh14@mails.tsinghua.edu.cn"),
-             person("Xiang", "Zhan", role = "aut"),
-             person("Anna", "Plantinga", role = "aut"),
+Title: Microbiome Regression-Based Analysis Tests
+Version: 1.1.0
+Authors@R: c(person("Anna", "Plantinga", role = c("aut", "cre"), email = "amp9@williams.edu"),
+             person("Nehemiah", "Wilson", role = c("aut", "ctb")),
+             person("Haotian", "Zheng", role = c("aut", "ctb")),
+             person("Xiang", "Zhan", role = c("aut", "ctb")),
              person("Michael", "Wu", role = "aut"),
-             person("Ni", "Zhao", role = c("aut", "cre"), email = "nzhao10@jhu.edu"),
-	     person("Jun", "Chen", role = "aut"))
-Author: Haotian Zheng [aut],
-  Xiang Zhan [aut],
-  Anna Plantinga [aut],
-  Michael Wu [aut],
-  Ni Zhao [aut, cre],
-  Jun Chen [aut]
-Maintainer: Ni Zhao <nzhao10@jhu.edu>
-Depends: R (>= 2.13.0), survival, PearsonDS, GUniFrac, MASS
-Description: Test for overall association between microbiome composition data with a continuous or dichotomous outcome via phylogenetic kernels. The phenotype can be univariate continuous or binary phenotypes (Zhao et al. (2015) <doi:10.1016/j.ajhg.2015.04.003>), survival outcomes (Plantinga et al. (2017) <doi:10.1186/s40168-017-0239-9>), multivariate (Zhan et al. (2017) <doi:10.1002/gepi.22030>) and structured phenotypes (Zhan et al. (2017) <doi:10.1111/biom.12684>). For all these effect, the microbiome community effect was modeled nonparametrically through a kernel function, which can incorporate the phylogenetic tree information.
+             person("Ni", "Zhao", role = c("aut", "ctb")),
+	           person("Jun", "Chen", role = "aut"))
+Maintainer: Anna Plantinga <amp9@williams.edu>
+Description: Test for overall association between microbiome composition data and phenotypes via phylogenetic kernels. 
+  The phenotype can be univariate continuous or binary (Zhao et al. (2015) <doi:10.1016/j.ajhg.2015.04.003>), 
+  survival outcomes (Plantinga et al. (2017) <doi:10.1186/s40168-017-0239-9>), 
+  multivariate (Zhan et al. (2017) <doi:10.1002/gepi.22030>) and 
+  structured phenotypes (Zhan et al. (2017) <doi:10.1111/biom.12684>). 
+  The package can also use robust and quantile regression (Fu et al. (2020+), in preparation). 
+  In each case, the microbiome community effect is modeled nonparametrically through a kernel function, 
+  which can incorporate phylogenetic tree information. 
+Depends: R (>= 3.0.2)
 License: GPL (>= 2)
-NeedsCompilation: yes
-Packaged: 2018-04-25 16:55:45 UTC; dell
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.0.2
+NeedsCompilation: no
+Imports: MASS, CompQuadForm, quantreg, GUniFrac, PearsonDS, lme4,
+        Matrix, permute, mixtools, survival, ecodist, stats
+Suggests: knitr, propr, cluster, dirmult, vegan, rmarkdown, tidyverse,
+        kableExtra
+VignetteBuilder: knitr, rmarkdown
+Packaged: 2020-04-13 18:06:56 UTC; anna
+Author: Anna Plantinga [aut, cre],
+  Nehemiah Wilson [aut, ctb],
+  Haotian Zheng [aut, ctb],
+  Xiang Zhan [aut, ctb],
+  Michael Wu [aut],
+  Ni Zhao [aut, ctb],
+  Jun Chen [aut]
 Repository: CRAN
-Date/Publication: 2018-04-25 19:44:09 UTC
+Date/Publication: 2020-04-14 08:50:16 UTC

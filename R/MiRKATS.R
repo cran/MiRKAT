@@ -1,91 +1,178 @@
-MiRKATS <-
-function(kd, distance=FALSE, obstime, delta, covar=NULL, beta=NULL, perm=FALSE, nperm=1000){
+#'Microiome Regression-based Kernel Association Test for Survival
+#' 
+#' Community level test for association between microbiome composition and survival outcomes (right-censored time-to-event data) 
+#' using kernel matrices to compare similarity between microbiome profiles with similarity in survival times. 
+#' 
+#' obstime, delta, and X should all have n rows, and the kernel or distance matrix should be a single n by n matrix. 
+#' If a distance matrix is entered (distance=TRUE), a kernel matrix will be constructed from the distance matrix.
+#' 
+#' Update in v1.1.0: MiRKATS also utilizes the OMiRKATS omnibus test if more than one kernel matrix is provided by the user. 
+#' The OMiRKATS omnibus test calculates an overall p-value for the test via permutation. 
+#'
+#' Missing data is not permitted. Please remove individuals with missing data on y, X or in the kernel or distance matrix prior 
+#' to using the function.
+#'
+#' The Efron approximation is used for tied survival times.
+#' 
+#' @param obstime A numeric vector of follow-up (survival/censoring) times.
+#' @param delta Event indicator: a vector of 0/1, where 1 indicates that the event was observed for a subject (so "obstime" is 
+#' survival time), and 0 indicates that the subject was censored.
+#' @param X A vector or matrix of numeric covariates, if applicable (default = NULL).
+#' @param Ks A list of or a single numeric n by n kernel matrices or matrix (where n is the sample size).
+#' @param beta A vector of coefficients associated with covariates. If beta is NULL and covariates are present, coxph is used to 
+#' calculate coefficients (default = NULL).
+#' @param perm Logical, indicating whether permutation should be used instead of analytic p-value calculation (default=FALSE). 
+#' Not recommended for sample sizes of 100 or more.
+#' @param nperm Integer, number of permutations used to calculate p-value if perm==TRUE (default=1000)
+#' @param returnKRV A logical indicating whether to return the KRV statistic. Defaults to FALSE. 
+#' @param returnR2 A logical indicating whether to return the R-squared coefficient. Defaults to FALSE.  
+#'
+#'@return 
+#'Return value depends on the number of kernel matrices inputted. If more than one kernel matrix is given, MiRKATS returns two
+#'items; a vector of the labeled individual p-values for each kernel matrix, as well as an omnibus p-value from the Optimal-MiRKATS
+#'omnibus test. If only one kernel matrix is given, then only its p-value will be given, as no omnibus test will be needed.
+#'    \item{p_values}{individual p-values for each inputted kernel matrix}
+#'    \item{omnibus_p}{overall omnibus p-value}
+#'     \item{KRV}{A vector of kernel RV statistics (a measure of effect size), one for each candidate kernel matrix. Only returned if returnKRV = TRUE}
+#'     \item{R2}{A vector of R-squared statistics, one for each candidate kernel matrix. Only returned if returnR2 = TRUE}
+#'     
+#' @author 
+#' Nehemiah Wilson, Anna Plantinga
+#' 
+#' @references 
+#' Plantinga, A., Zhan, X., Zhao, N., Chen, J., Jenq, R., and Wu, M.C. MiRKAT-S: a distance-based test of association between
+#' microbiome composition and survival times. Microbiome, 2017:5-17. doi: 10.1186/s40168-017-0239-9
+#'
+#' Zhao, N., Chen, J.,Carroll, I. M., Ringel-Kulka, T., Epstein, M.P., Zhou, H., Zhou, J. J., Ringel, Y., Li, H. and Wu, M.C. (2015)).
+#' Microbiome Regression-based Kernel Association Test (MiRKAT). American Journal of Human Genetics, 96(5):797-807
+#' 
+#' Chen, J., Chen, W., Zhao, N., Wu, M~C.and Schaid, D~J. (2016) Small Sample Kernel Association Tests for Human Genetic and
+#' Microbiome Association Studies. 40:5-19. doi: 10.1002/gepi.21934
+#' 
+#' Efron, B. (1977) "The efficiency of Cox's likelihood function for censored data." Journal of the American statistical 
+#' Association 72(359):557-565.
+#' 
+#' Davies R.B. (1980) Algorithm AS 155: The Distribution of a Linear Combination of chi-2 Random Variables, Journal of the Royal 
+#' Statistical Society Series C, 29:323-333
+#' 
+#' @importFrom survival coxph Surv
+#' 
+#'@examples 
+#'
+#'###################################
+#'# Generate data
+#'library(GUniFrac)
+#'
+#'# Throat microbiome data
+#'data(throat.tree)
+#'data(throat.otu.tab)
+#'
+#'unifracs = GUniFrac(throat.otu.tab, throat.tree, alpha = c(1))$unifracs
+#'Ds = list(w = unifracs[,,"d_1"], uw = unifracs[,,"d_UW"], 
+#'          BC= as.matrix(vegdist(throat.otu.tab, method="bray"))) 
+#'Ks = lapply(Ds, FUN = function(d) D2K(d))
+#'
+#'# Covariates and outcomes
+#'covar <- matrix(rnorm(120), nrow=60)
+#'S <- rexp(60, 3)   # survival time 
+#'C <- rexp(60, 1)   # censoring time 
+#'D <- (S<=C)        # event indicator
+#'U <- pmin(S, C)    # observed follow-up time
+#'
+#'MiRKATS(obstime = U, delta = D, X = covar, Ks = Ks, beta = NULL)
+#'
+#'
+#' @export
+MiRKATS <- function(obstime, delta, X = NULL, Ks,  beta = NULL, perm=FALSE, nperm=999, returnKRV = FALSE, returnR2 = FALSE){
+  
+  
+  if(!is.list(Ks)){
+    if (!is.matrix(Ks)) stop("Please convert your kernel into a matrix.")
+    Ks <- list(Ks)
+  }
+  
+  if(!length(Ks)==1){
+    if(is.null(names(Ks))){
+      message("Your p-values are not labeled with their corresponding kernel matrix. In order to have them labeled,
+              make your list of kernel matrices for the input of the form 'list(name1=K1, name2=K2'...) in order for the output
+              p-values to be labeled with 'name1,' 'name2,' etc.")
+    }
+  }
+  
   # light checks for input
   if(length(obstime) != length(delta)) stop("Please make sure you have n observed times and n event indicators.")
-  if(!is.null(beta) & is.null(covar)) warning("Your input includes coefficients but no covariates. Did you intend to include covariates?")
-  if(nrow(kd) != length(obstime)) stop("Number of observed times does not match distance or kernel matrix. Please check your object dimensions.")
-  if(class(kd) != "matrix") stop("Please convert your kernel or distance object into a matrix.")
+  if(!is.null(beta) & is.null(X)) warning("Your input includes coefficients but no covariates. Did you intend to include covariates?")
+  if(nrow(Ks[[1]]) != length(obstime)) stop("Number of observed times does not match distance or kernel matrix. Please check your object dimensions.")
   if(length(obstime) >= 100 & perm==TRUE){warning("Permutation p-values are not recommended unless n<100. Computation time may be long.")}
-  if(length(obstime) <= 50 & perm==FALSE){warning("May wish to use permutation p-values when n <= 50.")}
-
-  # sort in order of observed times
-  ord = order(obstime)
-  n = length(obstime)
-  U = obstime[ord]
-  D = delta[ord]
-  if(!is.null(covar)){ X = as.matrix(as.matrix(covar, nrow=n)[ord,], nrow=n) } else { X = NULL }
-  if(distance==TRUE){ kk <- D2K(kd); K <- kk[ord,ord] }
-  if(distance==FALSE){ K = kd[ord,ord] }
-  ftimes <- sort(U[D==1])     # failure times (i.e., event observed)
-  fdups <- table(ftimes)
-  fdups <- unlist(sapply(fdups, FUN=function(x)rep(x, x))) # counts at each failure time
-  fdupcts <- unlist(sapply( table(ftimes), FUN=function(x) c(0:(x-1)) ))
-
-                                        # if no covariates or no coefficients provided
-  if(!is.null(X) & is.null(beta)){ beta <- coxph(Surv(U,D) ~ ., data=data.frame(X), ties="efron")$coef }
-  if(is.null(X)){ eta <- rep(0,n) } else{ eta = X %*% beta }
-  V <- as.vector(exp(eta))
-
-  # notation (sometimes) matches Lin 2011
-  # Efron approximation for ties
-  R.i <- sapply(ftimes, FUN=function(x) U >= x)  ## risk sets (n x # failure times)
-  D.i <- sapply(ftimes, FUN=function(x) U==x & D==1)  ## events at time t_i
-  num <- apply(R.i, 2, FUN=function(x) V*x) - t(apply( apply(D.i, 2, FUN=function(x) x*V), 1, FUN=function(x) x*(fdupcts/fdups) ))
-  denom <- apply( apply(R.i, 2, FUN=function(x) V*x) - t(apply( apply(D.i, 2, FUN=function(x) x*V), 1, FUN=function(x) x*(fdupcts/fdups) )), 2, sum)
-  dLam <- apply(num, 1, FUN=function(x) x/denom)
-  Lam <- apply(dLam, 2, sum)
-  M.hat <- D - Lam  ## matches Martingale residuals from coxph
-
-  if(perm==TRUE){
-    obs.stat <- as.numeric(M.hat%*%K%*%M.hat)
-    stat <- c()
-    count <- 0
-
-    while(count < nperm){
-      # permute
-      ord <- sample(n)
-      mhat <- M.hat[ord]
-      this <- mhat%*%K%*%mhat
-
-      stat <- c(stat, this)
-      count <- count + 1
-    }
-    pval <- mean(stat >= obs.stat)
-  } else {
-    # P0.star (from Han Chen)
-    V.mat <- diag(Lam) - t(dLam) %*% dLam
-    if(is.null(X)){ P0 <- V.mat } else { P0 <- V.mat - V.mat%*%X %*% solve(t(X)%*%V.mat%*%X) %*% t(X)%*%V.mat }
-    eig.P0 <- eigen(P0)
-    eig.P0.val <- eig.P0$values
-    eig.P0.val[eig.P0.val < 1e-12] <- 0   # round eigenvalues too small to take the sqrt; enforce psd
-    sqrt.P0 <- eig.P0$vectors %*% diag(sqrt(eig.P0.val)) %*% t(eig.P0$vectors)
-
-    # Small sample correction
-    dLam.2 <- dLam^2
-    Lam.2 <- apply(dLam.2, 2, sum)
-    W <- Lam - Lam.2
-    if(sum(which(is.na(W)))>0) { W[which(is.na(W))] <- 1e-10 }
-    W[which(W<1e-12)] <- 1e-10
-
-    W.mat <- diag(W)
-    this.eig <- eigen(W.mat)
-    sqrt.W <- this.eig$vectors %*% diag(sqrt(this.eig$values)) %*% t(this.eig$vectors)
-    z <- eta + (1/W)*M.hat
-    if(!is.null(X)){
-      y.star <- sqrt.W %*% z
-      X.star <- sqrt.W %*% X
-      e.star <- y.star - X.star %*% beta
-      P0.star <- diag(rep(1,n)) - X.star %*% solve(t(X.star) %*% X.star) %*% t(X.star)
+  if(length(obstime) <= 50 & perm==FALSE){warning("Permutation p-values are recommendeded when n <= 50.")}
+  
+  if (returnKRV | returnR2) {
+    resids = scale(residuals(coxph(Surv(time = obstime, event = delta) ~ 1), type="martingale"))
+    L = resids %*% t(resids) 
+    if (returnKRV) {
+      KRVs <- unlist(lapply(Ks, FUN = function(k) calcKRVstat(k, L)))
     } else {
-      P0.star <- diag(n)
+      KRVs = NULL 
     }
-
-    # Calculate test statistic and p-value
-    obs.r <- c( M.hat %*% K %*% M.hat / (sum(M.hat^2)) )
-    stat1 <- P0.star %*% (K - obs.r*diag(n)) %*% P0.star
-    stat <- sqrt.P0 %*% stat1 %*% sqrt.P0
-    lam <- eigen(stat)$values
-    pval <- davies(0, lam)$Qq
+    if (returnR2) {
+      R2 <- unlist(lapply(Ks, FUN = function(k) calcRsquared(k, L)))
+    } else {
+      R2 = NULL 
+    }
+  } else {
+    KRVs = R2 = NULL 
   }
-  return(pval)
+  
+  
+  # Calculate individual p-values
+  pvals <- c()
+  for(i in 1:length(Ks)){
+    inner_output <- inner.MiRKATS(obstime=obstime, delta=delta, covar = X, K = Ks[[i]], beta=beta, perm=perm, nperm=nperm)
+    pvals[i] <- inner_output
+  }
+  
+  # Naming the individual p-values with the names of the corresponding kernel matrix names
+  names_Ks <- names(Ks)
+  named_pvals <- setNames(pvals, names_Ks)
+  
+    
+  if(length(Ks) > 1){
+    ######################################
+    # Optimal-MiRKATS omnibus test begins
+    ######################################
+    
+    r <- coxph(Surv(obstime, delta) ~ ., data=as.data.frame(X))$residuals 
+    r.s <- list() # becomes a list of permuted vectors of residuals
+    for (j in 1:nperm) {
+      r.s[[j]] <- r[shuffle(length(r))]
+    }
+    
+    T0s.mirkats <- list()
+    for (j in 1:length(Ks)) {
+      T0s.mirkats.inv <- rep(NA, nperm)
+      for (k in 1:nperm) {
+        T0s.mirkats.inv[k] <- t(r.s[[k]])%*%Ks[[j]]%*%r.s[[k]]
+      }
+      T0s.mirkats[[j]] <- T0s.mirkats.inv
+    }
+    
+    Q.mirkats <- min(pvals) # The test statistic for OMiRKATS, Q.mirkats, is the minimum of the p-values from MiRKATS
+    Q0.mirkats <- rep(NA, nperm) 
+    for (l in 1:nperm) { # Creating a list of omnibus test statistics (minimum p-values from null distributions of test statistics)
+      Q0.mirkats.s.n <- list()
+      for (m in 1:length(Ks)) {
+        Q0.mirkats.s.n[[m]] <- T0s.mirkats[[m]][-l]
+      }
+      a.Qs.mirkats <- unlist(lapply(Ks,function(x) return(t(r.s[[l]])%*%x%*%r.s[[l]])))
+      a.pvs <- unlist(mapply(function(x,y)length(which(abs(x) >= abs(y)))/(nperm-1),Q0.mirkats.s.n,a.Qs.mirkats))
+      Q0.mirkats[l] <- min(a.pvs)
+    }
+    
+    p.omirkats <- length(which(Q0.mirkats <= Q.mirkats))/nperm # The omnibus p-value
+    
+  return(list(p_values=named_pvals, omnibus_p=p.omirkats, KRV = KRVs, R2 = R2))
+  }
+  
+  return(list(p_values=named_pvals, KRV = KRVs, R2 = R2))
 }
+
