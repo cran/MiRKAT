@@ -35,6 +35,8 @@
 #' @param slope An indicator to include random slopes in the model (slope = TRUE) or not (slope = FALSE). 'slope = FALSE' is for 
 #' the random intercept model. 'slope = TRUE' is for the random slope model. For the random slope model (slope = TRUE), 'time.pt' 
 #' is required.
+#' @param omnibus A string equal to either "Cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
+#'  to use the Cauchy combination test or residual permutation to generate the omnibus p-value. 
 #' @param nperm The number of permutations used to calculate the p-values and omnibus p-value. Defaults to 5000.
 #' 
 #' @return Returns a p-value for each inputted kernel matrix, as well as an overall omnibus p-value if more than one kernel matrix
@@ -80,8 +82,9 @@
 #'
 #' @export
 GLMMMiRKAT <- function(y, X = NULL, Ks, id = NULL, time.pt = NULL, model, method = "perm" , 
-                       formula.H0=NULL, slope = FALSE, nperm = 5000){
+                       formula.H0=NULL, slope = FALSE, omnibus = "perm", nperm = 5000){
 
+  om <- substring(tolower(omnibus), 1, 1)
 
   if (is.null(time.pt) & slope) {
     stop("time.pt is required for the random slope model")
@@ -300,27 +303,33 @@ GLMMMiRKAT <- function(y, X = NULL, Ks, id = NULL, time.pt = NULL, model, method
   for (j in 1:length(Ks)) {
     pvs[j] <- (length(which(Q0s[[j]] > Qs[[j]])) + 1)/(nperm + 1)
   }
-  T <- min(pvs)
-  T0 <- rep(NA, nperm)
-  for (l in 1:nperm) {
-    T0.s.n <- list()
-    for (m in 1:length(Ks)) {
-      T0.s.n[[m]] <- Q0s[[m]][-l]
-    }
-    a.Ts <- unlist(lapply(Ks, function(x) return((t(r.s[[l]]) %*% 
-                                                    inv.vX %*% x %*% inv.vX %*% r.s[[l]])/(t(r.s[[l]]) %*% 
+  
+  if (!no.omnibus) {
+    if (om == "p") {
+      T <- min(pvs)
+      T0 <- rep(NA, nperm)
+      for (l in 1:nperm) {
+        T0.s.n <- list()
+        for (m in 1:length(Ks)) {
+          T0.s.n[[m]] <- Q0s[[m]][-l]
+        }
+        a.Ts <- unlist(lapply(Ks, function(x) return((t(r.s[[l]]) %*% 
+                                                        inv.vX %*% x %*% inv.vX %*% r.s[[l]])/(t(r.s[[l]]) %*% 
                                                                                                  inv.vX %*% r.s[[l]]))))
-    a.pvs <- unlist(mapply(function(x, y) (length(which(x > 
-                                                          y)) + 1)/nperm, T0.s.n, a.Ts))
-    T0[l] <- min(a.pvs)
+        a.pvs <- unlist(mapply(function(x, y) (length(which(x > 
+                                                              y)) + 1)/nperm, T0.s.n, a.Ts))
+        T0[l] <- min(a.pvs)
+      }
+      pv.opt <- (length(which(T0 < T)) + 1)/(nperm + 1)
+    } else if (om == "c") {
+      cauchy.t <- sum(tan((0.5 - pvs)*pi))/length(pvs)
+      pv.opt <- 1 - pcauchy(cauchy.t)
+    } else {
+      stop("I don't know that omnibus option. Please choose 'permutation' or 'Cauchy'.")
+    }
   }
-  pv.opt <- (length(which(T0 < T)) + 1)/(nperm + 1)
-  if(is.null(names(Ks))){
-    warning("P-values are not labeled with their corresponding kernel matrix. In order to have them labeled,
-            format your list of kernel matrices as 'list(name1=K1, name2=K2, ...)'.")
-  } else {
-    names(pvs) <- names(Ks)
-  }
+  
+  names(pvs) <- names(Ks)
   
   if (no.omnibus) {
     return(list(p_values = pvs))

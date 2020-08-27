@@ -23,6 +23,8 @@
 #'  inverting the characteristic function of the mixture chisq. We adopt an exact variance component tests because most of the studies
 #'  concerning microbiome compositions have modest sample size. "moment" represents an approximation method that matches the first
 #'  two moments. "permutation" represents a permutation approach for p-value calculation. Defaults to "davies".
+#' @param omnibus A string equal to either "Cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
+#'  to use the Cauchy combination test or residual permutation to generate the omnibus p-value. 
 #' @param nperm The number of permutations if method = "permutation" or when multiple kernels are considered. If method = "davies" or 
 #' "moment", nperm is ignored. Defaults to 999.
 #' @param returnKRV A logical indicating whether to return the KRV statistic (a measure of effect size). Defaults to FALSE. 
@@ -89,13 +91,15 @@
 #'
 #'
 #' @export 
-MiRKAT = function(y, X = NULL, Ks, out_type = "C", method = "davies", nperm = 999, returnKRV = FALSE, returnR2 = FALSE){
+MiRKAT = function(y, X = NULL, Ks, out_type = "C", method = "davies", 
+                  omnibus = "permutation", 
+                  nperm = 999, returnKRV = FALSE, returnR2 = FALSE){
   
   n = length(y)
   
   if (any(is.na(y))){
     ids = which(is.na(y))
-    stop(paste("subjects", ids, "has missing response, please remove before proceed \n")) 
+    stop(paste("missing response for subject(s)", ids, ", please remove before proceeding \n")) 
   }
 
   if(is.null(X)==FALSE){
@@ -104,13 +108,6 @@ MiRKAT = function(y, X = NULL, Ks, out_type = "C", method = "davies", nperm = 99
   
   if (is.matrix(Ks)) {
     Ks = list(Ks)
-  }
-  if(!length(Ks)==1){
-    if(is.null(names(Ks))){
-      message("P-values are not labeled with their corresponding kernel matrix. In order to have them labeled,
-              make your list of kernel matrices for the input of the form 'list(name1=K1, name2=K2'...) in order for the output
-              p-values to be labeled with 'name1,' 'name2,' etc.")
-    }
   }
   
   if (is.list(Ks)) {  
@@ -142,11 +139,11 @@ MiRKAT = function(y, X = NULL, Ks, out_type = "C", method = "davies", nperm = 99
     stop("Only continuous and binary outcomes are supported by this function. Please choose out_type = \"C\" or \"D\", or use an alternative function for other outcome types.")
   }
   if(out_type  == "C"){
-    re = MiRKAT_continuous(y, X = X, Ks = Ks, method = method, nperm = nperm, returnKRV = returnKRV, returnR2 = returnR2)  
+    re = MiRKAT_continuous(y, X = X, Ks = Ks, method = method, omnibus = omnibus, nperm = nperm, returnKRV = returnKRV, returnR2 = returnR2)  
   }
   
   if(out_type  == "D"){
-    re = MiRKAT_binary(y, X = X, Ks = Ks, method = method, nperm = nperm, returnKRV = returnKRV, returnR2 = returnR2)  
+    re = MiRKAT_binary(y, X = X, Ks = Ks, method = method, omnibus = omnibus, nperm = nperm, returnKRV = returnKRV, returnR2 = returnR2)  
   }
   
   return(re)

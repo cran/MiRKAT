@@ -4,7 +4,7 @@
 \alias{MiRKAT.R}
 \title{Robust MiRKAT (robust regression)}
 \usage{
-MiRKAT.R(y, X, Ks, returnKRV = FALSE, returnR2 = FALSE)
+MiRKAT.R(y, X, Ks, omnibus = "kernel_om", returnKRV = FALSE, returnR2 = FALSE)
 }
 \arguments{
 \item{y}{A numeric vector of the a continuous or dichotomous outcome variable.}
@@ -14,6 +14,9 @@ MiRKAT.R(y, X, Ks, returnKRV = FALSE, returnR2 = FALSE)
 \item{Ks}{list of n by n kernel matrices (or a single n by n kernel matrix), where n is the sample size. It can be constructed from 
 microbiome data through distance metric or other approaches, such as linear kernels or Gaussian kernels.}
 
+\item{omnibus}{A string equal to either "Cauchy" or "kernel_om" (or nonambiguous abbreviations thereof), specifying whether 
+to use the Cauchy combination test or an omnibus kernel to generate the omnibus p-value.}
+
 \item{returnKRV}{A logical indicating whether to return the KRV statistic. Defaults to FALSE.}
 
 \item{returnR2}{A logical indicating whether to return the R-squared coefficient. Defaults to FALSE.}
@@ -22,8 +25,8 @@ microbiome data through distance metric or other approaches, such as linear kern
 Returns p-values for each individual kernel matrix, an omnibus p-value if multiple kernels were provided, and measures of effect size KRV and R2. 
    \item{p_values}{labeled individual p-values for each kernel}
    \item{omnibus_p}{omnibus p_value, calculated as for the KRV test}
-    \item{KRV}{A vector of kernel RV statistics (a measure of effect size), one for each candidate kernel matrix. Only returned if returnKRV = TRUE}
-    \item{R2}{A vector of R-squared statistics, one for each candidate kernel matrix. Only returned if returnR2 = TRUE}
+   \item{KRV}{A vector of kernel RV statistics (a measure of effect size), one for each candidate kernel matrix. Only returned if returnKRV = TRUE}
+   \item{R2}{A vector of R-squared statistics, one for each candidate kernel matrix. Only returned if returnR2 = TRUE}
 }
 \description{
 A more robust version of MiRKAT utilizing a linear model by robust regression using an M estimator.

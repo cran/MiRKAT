@@ -4,7 +4,7 @@
 \alias{MiRKAT.Q}
 \title{Robust MiRKAT (quantile regression)}
 \usage{
-MiRKAT.Q(y, X, Ks, returnKRV = FALSE, returnR2 = FALSE)
+MiRKAT.Q(y, X, Ks, omnibus = "kernel_om", returnKRV = FALSE, returnR2 = FALSE)
 }
 \arguments{
 \item{y}{A numeric vector of the a continuous or dichotomous outcome variable.}
@@ -13,6 +13,9 @@ MiRKAT.Q(y, X, Ks, returnKRV = FALSE, returnR2 = FALSE)
 
 \item{Ks}{A list of n by n kernel matrices (or a single n by n kernel matrix), where n is the sample size. If you have distance metric from metagenomic data, each kernel can 
 be constructed through function D2K. Each kernel can also be constructed through other mathematical approaches, such as linear or Gaussian kernels.}
+
+\item{omnibus}{A string equal to either "Cauchy" or "kernel_om" (or nonambiguous abbreviations thereof), specifying whether 
+to use the Cauchy combination test or an omnibus kernel to generate the omnibus p-value.}
 
 \item{returnKRV}{A logical indicating whether to return the KRV statistic. Defaults to FALSE.}
 

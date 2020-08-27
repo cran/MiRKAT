@@ -9,6 +9,7 @@ MiRKAT_continuous(
   X = NULL,
   Ks,
   method = "davies",
+  omnibus = "permutation",
   nperm = 999,
   returnKRV = FALSE,
   returnR2 = FALSE
@@ -27,6 +28,9 @@ the p-value by inverting the characteristic function of the mixture chisq. We ad
 of the studies concerning microbiome compositions have modest sample size. "moment" represents an approximation method that matches
 the first two moments. "permutation" represents a permutation approach for p-value calculation.}
 
+\item{omnibus}{A string equal to either "Cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
+to use the Cauchy combination test or residual permutation to generate the omnibus p-value.}
+
 \item{nperm}{the number of permutations if method = "permutation" or when multiple kernels are considered. If method = "davies" or 
 "moment", nperm is ignored. Defaults to 999.}
 
@@ -38,7 +42,7 @@ the first two moments. "permutation" represents a permutation approach for p-val
 If only one candidate kernel matrix is considered, returns a list containing the p-value for the candidate kernel matrix. 
 If more than one candidate kernel matrix is considered, returns a list of two elements: the individual p-values for
 each candidate kernel matrix, and the omnibus p-value
-    \item{indivP}{p-value for each candidate kernel matrix}
+    \item{p_values}{p-value for each candidate kernel matrix}
     \item{omnibus_p}{omnibus p-value considering multiple candidate kernel matrices}
     \item{KRV}{A vector of kernel RV statistics (a measure of effect size), one for each candidate kernel matrix. Only returned if returnKRV = TRUE}
     \item{R2}{A vector of R-squared statistics, one for each candidate kernel matrix. Only returned if returnR2 = TRUE}

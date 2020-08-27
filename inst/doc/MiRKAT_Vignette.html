@@ -344,40 +344,40 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="example-dataset" class="section level3">
 <h3>Example Dataset</h3>
 <p>We use the throat microbiome data (Charlson et al 2010) from the package GUniFrac to demonstrate our methods. Data are available for 60 subjects, of whom 28 were smokers and 32 were nonsmokers. Microbiome data were collected from right and left nasopharynx and oropharynx regions to form an OTU table with 856 OTUs. We want to evaluate whether smoking is associated with differences in microbiome composition in the upper respiratory tract, taking into consideration additional covariates including gender and antibiotic use within 3 months. We also use simulated data based on the throat dataset to demonstrate the usage of MiRKAT-S, MMiRKAT, MiRKAT.R, MiRKAT.Q, and KRV.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">data</span>(<span class="st">&quot;throat.otu.tab&quot;</span>)</span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">data</span>(<span class="st">&quot;throat.meta&quot;</span>)</span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="kw">data</span>(<span class="st">&quot;throat.tree&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">data</span>(<span class="st">&quot;throat.otu.tab&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="kw">data</span>(<span class="st">&quot;throat.meta&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="kw">data</span>(<span class="st">&quot;throat.tree&quot;</span>)</span></code></pre></div>
 </div>
 <div id="data-preparation" class="section level3">
 <h3>Data Preparation</h3>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>Male &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(throat.meta<span class="op">$</span>Sex <span class="op">==</span><span class="st"> &quot;Male&quot;</span>)</span>
-<span id="cb2-2"><a href="#cb2-2"></a>Smoker &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(throat.meta<span class="op">$</span>SmokingStatus <span class="op">==</span><span class="st"> &quot;Smoker&quot;</span>)</span>
-<span id="cb2-3"><a href="#cb2-3"></a>anti &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(throat.meta<span class="op">$</span>AntibioticUsePast3Months_TimeFromAntibioticUsage <span class="op">!=</span><span class="st"> &quot;None&quot;</span>)</span>
-<span id="cb2-4"><a href="#cb2-4"></a>covar &lt;-<span class="st"> </span><span class="kw">cbind</span>(Male, anti)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>Male &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(throat.meta<span class="op">$</span>Sex <span class="op">==</span><span class="st"> &quot;Male&quot;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>Smoker &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(throat.meta<span class="op">$</span>SmokingStatus <span class="op">==</span><span class="st"> &quot;Smoker&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>anti &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(throat.meta<span class="op">$</span>AntibioticUsePast3Months_TimeFromAntibioticUsage <span class="op">!=</span><span class="st"> &quot;None&quot;</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>covar &lt;-<span class="st"> </span><span class="kw">cbind</span>(Male, anti)</span></code></pre></div>
 </div>
 <div id="create-the-unifrac-distances" class="section level3">
 <h3>Create the UniFrac Distances</h3>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># Note: may want to rarefy the data to the minimum sequencing depth for unweighted (presence/absence) distances </span></span>
-<span id="cb3-2"><a href="#cb3-2"></a><span class="co">## otu.tab.rff &lt;- Rarefy(throat.otu.tab)$otu.tab.rff</span></span>
-<span id="cb3-3"><a href="#cb3-3"></a>unifracs &lt;-<span class="st"> </span><span class="kw">GUniFrac</span>(throat.otu.tab, throat.tree, <span class="dt">alpha =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">1</span>))<span class="op">$</span>unifracs</span>
-<span id="cb3-4"><a href="#cb3-4"></a>D.weighted =<span class="st"> </span>unifracs[,,<span class="st">&quot;d_1&quot;</span>]</span>
-<span id="cb3-5"><a href="#cb3-5"></a>D.unweighted =<span class="st"> </span>unifracs[,,<span class="st">&quot;d_UW&quot;</span>]</span>
-<span id="cb3-6"><a href="#cb3-6"></a>D.generalized =<span class="st"> </span>unifracs[,,<span class="st">&quot;d_0.5&quot;</span>]</span>
-<span id="cb3-7"><a href="#cb3-7"></a>D.BC =<span class="st"> </span><span class="kw">as.matrix</span>(<span class="kw">vegdist</span>(throat.otu.tab, <span class="dt">method=</span><span class="st">&quot;bray&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co"># Note: may want to rarefy the data to the minimum sequencing depth for unweighted (presence/absence) distances </span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="co">## otu.tab.rff &lt;- Rarefy(throat.otu.tab)$otu.tab.rff</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>unifracs &lt;-<span class="st"> </span><span class="kw">GUniFrac</span>(throat.otu.tab, throat.tree, <span class="dt">alpha =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">1</span>))<span class="op">$</span>unifracs</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>D.weighted =<span class="st"> </span>unifracs[,,<span class="st">&quot;d_1&quot;</span>]</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>D.unweighted =<span class="st"> </span>unifracs[,,<span class="st">&quot;d_UW&quot;</span>]</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>D.generalized =<span class="st"> </span>unifracs[,,<span class="st">&quot;d_0.5&quot;</span>]</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>D.BC =<span class="st"> </span><span class="kw">as.matrix</span>(<span class="kw">vegdist</span>(throat.otu.tab, <span class="dt">method=</span><span class="st">&quot;bray&quot;</span>))</span></code></pre></div>
 </div>
 <div id="convert-distance-to-kernel-matrices" class="section level3">
 <h3>Convert Distance to Kernel Matrices</h3>
 <p>The D2K function in MiRKAT converts distance matrices to kernel matrices via the transformation <span class="math display">\[K = -\frac{1}{2} \left(I - \frac{1 1&#39;}{n}\right) D^2 \left(I - \frac{1 1&#39;}{n}\right)\]</span> Here, <span class="math inline">\(I\)</span> is the identity matrix and <span class="math inline">\(1\)</span> is an <span class="math inline">\(n\)</span>-vector of ones. To ensure that <span class="math inline">\(K\)</span> is positive semi-definite, we replace negative eigenvalues with zero. That is, we perform an eigenvalue decomposition <span class="math inline">\(K = U \Lambda U\)</span>, where <span class="math inline">\(\Lambda = \text{diag}(\lambda_1,...,\lambda_n)\)</span>, and then reconstruct the kernel matrix using the non-negative eigenvalues <span class="math inline">\(\Lambda^* = \text{diag}(\text{max}(\lambda_1,0),...,\text{max}(\lambda_n,0))\)</span> so that <span class="math inline">\(K = U \Lambda^* U\)</span>.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>K.weighted =<span class="st"> </span><span class="kw">D2K</span>(D.weighted)</span>
-<span id="cb4-2"><a href="#cb4-2"></a>K.unweighted =<span class="st"> </span><span class="kw">D2K</span>(D.unweighted)</span>
-<span id="cb4-3"><a href="#cb4-3"></a>K.generalized =<span class="st"> </span><span class="kw">D2K</span>(D.generalized)</span>
-<span id="cb4-4"><a href="#cb4-4"></a>K.BC =<span class="st"> </span><span class="kw">D2K</span>(D.BC)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>K.weighted =<span class="st"> </span><span class="kw">D2K</span>(D.weighted)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>K.unweighted =<span class="st"> </span><span class="kw">D2K</span>(D.unweighted)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>K.generalized =<span class="st"> </span><span class="kw">D2K</span>(D.generalized)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>K.BC =<span class="st"> </span><span class="kw">D2K</span>(D.BC)</span></code></pre></div>
 </div>
 <div id="testing-using-a-single-kernel" class="section level3">
 <h3>Testing Using a Single Kernel</h3>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">MiRKAT</span>(<span class="dt">y =</span> Smoker, <span class="dt">X =</span> covar, <span class="dt">Ks =</span> K.weighted, <span class="dt">out_type =</span> <span class="st">&quot;D&quot;</span>, </span>
-<span id="cb5-2"><a href="#cb5-2"></a>       <span class="dt">method =</span> <span class="st">&quot;davies&quot;</span>, <span class="dt">returnKRV =</span> <span class="ot">TRUE</span>, <span class="dt">returnR2 =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
-<pre><code>## $indivP
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">MiRKAT</span>(<span class="dt">y =</span> Smoker, <span class="dt">X =</span> covar, <span class="dt">Ks =</span> K.weighted, <span class="dt">out_type =</span> <span class="st">&quot;D&quot;</span>, </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>       <span class="dt">method =</span> <span class="st">&quot;davies&quot;</span>, <span class="dt">returnKRV =</span> <span class="ot">TRUE</span>, <span class="dt">returnR2 =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<pre><code>## $p_values
 ## [1] 0.005306786
 ## 
 ## $KRV
@@ -504,16 +504,17 @@ Similar to Jaccard, but uses counts
 </div>
 <div id="testing-using-multiple-kernels" class="section level3">
 <h3>Testing Using Multiple Kernels</h3>
-<p>We provide an omnibus test that takes into account multiple kernels simultaneously. The method is robust in the sense that it has substantial power gain compared to when an improper kernel is used, and has little power loss compared to when the best kernel is used.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>Ks =<span class="st"> </span><span class="kw">list</span>(<span class="dt">K.weighted =</span> K.weighted, <span class="dt">K.unweighted =</span> K.unweighted, <span class="dt">K.BC =</span> K.BC)</span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="kw">MiRKAT</span>(<span class="dt">y =</span> Smoker, <span class="dt">Ks =</span> Ks, <span class="dt">X =</span> covar, <span class="dt">out_type =</span> <span class="st">&quot;D&quot;</span>, </span>
-<span id="cb7-3"><a href="#cb7-3"></a>       <span class="dt">method =</span> <span class="st">&quot;davies&quot;</span>, <span class="dt">returnKRV =</span> <span class="ot">TRUE</span>, <span class="dt">returnR2 =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<p>We provide an omnibus test that takes into account multiple kernels simultaneously. The method is robust in the sense that it has substantial power gain compared to when an improper kernel is used, and has little power loss compared to when the best kernel is used. Two options for omnibus testing are provided: residual permutation and the Cauchy combination test (weighting all kernels equally).</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>Ks =<span class="st"> </span><span class="kw">list</span>(<span class="dt">K.weighted =</span> K.weighted, <span class="dt">K.unweighted =</span> K.unweighted, <span class="dt">K.BC =</span> K.BC)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="kw">MiRKAT</span>(<span class="dt">y =</span> Smoker, <span class="dt">Ks =</span> Ks, <span class="dt">X =</span> covar, <span class="dt">out_type =</span> <span class="st">&quot;D&quot;</span>, </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>       <span class="dt">method =</span> <span class="st">&quot;davies&quot;</span>, <span class="dt">omnibus =</span> <span class="st">&quot;permutation&quot;</span>, </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>       <span class="dt">returnKRV =</span> <span class="ot">TRUE</span>, <span class="dt">returnR2 =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
 <pre><code>## $p_values
 ##   K.weighted K.unweighted         K.BC 
 ##  0.005306786  0.003801015  0.002287489 
 ## 
 ## $omnibus_p
-## [1] 0.0075
+## [1] 0.0045
 ## 
 ## $KRV
 ##   K.weighted K.unweighted         K.BC 
@@ -522,26 +523,36 @@ Similar to Jaccard, but uses counts
 ## $R2
 ##   K.weighted K.unweighted         K.BC 
 ##   0.01757917   0.01981955   0.02403491</code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">MiRKAT</span>(<span class="dt">y =</span> Smoker, <span class="dt">Ks =</span> Ks, <span class="dt">X =</span> covar, <span class="dt">out_type =</span> <span class="st">&quot;D&quot;</span>, </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>       <span class="dt">method =</span> <span class="st">&quot;davies&quot;</span>, <span class="dt">omnibus =</span> <span class="st">&quot;Cauchy&quot;</span>, </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>       <span class="dt">returnKRV =</span> <span class="ot">FALSE</span>, <span class="dt">returnR2 =</span> <span class="ot">FALSE</span>)</span></code></pre></div>
+<pre><code>## $p_values
+##   K.weighted K.unweighted         K.BC 
+##  0.005306786  0.003801015  0.002287489 
+## 
+## $omnibus_p
+## [1] 0.003375785</code></pre>
 </div>
 <div id="testing-with-a-continuous-outcome-variable" class="section level3">
 <h3>Testing with a Continuous Outcome Variable</h3>
 <p>The only difference between using a continuous and dichotomous outcome variable is the value of the argument “out_type”, as shown below.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>y &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="kw">nrow</span>(K.weighted))</span>
-<span id="cb9-2"><a href="#cb9-2"></a><span class="kw">MiRKAT</span>(<span class="dt">y =</span> y, <span class="dt">Ks =</span> Ks, <span class="dt">X =</span> covar, <span class="dt">out_type =</span> <span class="st">&quot;C&quot;</span>, <span class="dt">nperm =</span> <span class="dv">999</span>, </span>
-<span id="cb9-3"><a href="#cb9-3"></a>       <span class="dt">method =</span> <span class="st">&quot;davies&quot;</span>, <span class="dt">returnKRV =</span> <span class="ot">TRUE</span>, <span class="dt">returnR2 =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
-<pre><code>## $indivP
-## [1] 0.4401194 0.3623498 0.2494742
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a>y &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="kw">nrow</span>(K.weighted))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a><span class="kw">MiRKAT</span>(<span class="dt">y =</span> y, <span class="dt">Ks =</span> Ks, <span class="dt">X =</span> covar, <span class="dt">out_type =</span> <span class="st">&quot;C&quot;</span>, <span class="dt">nperm =</span> <span class="dv">999</span>, </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>       <span class="dt">method =</span> <span class="st">&quot;davies&quot;</span>, <span class="dt">omnibus =</span> <span class="st">&quot;Cauchy&quot;</span>, <span class="dt">returnKRV =</span> <span class="ot">TRUE</span>, <span class="dt">returnR2 =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<pre><code>## $p_values
+##   K.weighted K.unweighted         K.BC 
+##   0.02500038   0.18247132   0.04586748 
 ## 
 ## $omnibus_p
-## [1] 0.401
+## [1] 0.044858
 ## 
 ## $KRV
 ##   K.weighted K.unweighted         K.BC 
-## 0.0008987168 0.0006520430 0.0002601146 
+## 0.0022870734 0.0008035403 0.0004258828 
 ## 
 ## $R2
 ##   K.weighted K.unweighted         K.BC 
-##  0.001706709  0.007121559  0.004182427</code></pre>
+##   0.01105284   0.01081528   0.01121190</code></pre>
 <p>This function outputs p-values for association using each single kernel and an omnibus p-value considering all kernels. The omnibus p-value is obtained through residual permutation where the minimum p-values from each of the individual tests are used as test statistics. As before, the “method” option only indicates the method that is used for generating individual kernel p-values.</p>
 </div>
 </div>
@@ -550,50 +561,50 @@ Similar to Jaccard, but uses counts
 <div id="simulate-time-to-event-data" class="section level3">
 <h3>Simulate time to event data</h3>
 <p>We again use Charlson’s throat microbiome data to demonstrate the use of MiRKAT-S. Data loading and preparation are the same as in the previous section. Because the original dataset has a binary phenotype (smoking) rather than a measure of censored time to event outcomes, we consider smoking status and gender as covariates and generate null outcome data from the Exponential distribution. Specifically, we generate survival times as <span class="math inline">\(S \sim \text{Exponential}(1 + I(\text{smoke}) + I(\text{male}))\)</span>, and censoring times as <span class="math inline">\(C \sim \text{Exponential}(0.75)\)</span>. Then the observed outcome measures are observation time <span class="math inline">\(T = \text{min}(S, C)\)</span> and an indicator variable for whether the event was observed, <span class="math inline">\(\Delta = I(S \leq C)\)</span>. That is, when delta = 1, the corresponding “obstime” is the survival time, and when delta = 0, the corresponding observation is censored and “obstime” is the time of censoring. This simulation procedure results in approximately 33% censoring.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co"># Simulate outcomes</span></span>
-<span id="cb11-2"><a href="#cb11-2"></a><span class="co"># Here, outcome is associated with covariates but unassociated with microbiota</span></span>
-<span id="cb11-3"><a href="#cb11-3"></a><span class="co"># Approximately 33% censoring</span></span>
-<span id="cb11-4"><a href="#cb11-4"></a>SurvTime &lt;-<span class="st"> </span><span class="kw">rexp</span>(<span class="dv">60</span>, (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>Smoker <span class="op">+</span><span class="st"> </span>Male))</span>
-<span id="cb11-5"><a href="#cb11-5"></a>CensTime &lt;-<span class="st"> </span><span class="kw">rexp</span>(<span class="dv">60</span>, <span class="fl">0.75</span>)</span>
-<span id="cb11-6"><a href="#cb11-6"></a>Delta &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(SurvTime <span class="op">&lt;=</span><span class="st"> </span>CensTime )</span>
-<span id="cb11-7"><a href="#cb11-7"></a>ObsTime &lt;-<span class="st"> </span><span class="kw">pmin</span>(SurvTime, CensTime)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="co"># Simulate outcomes</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a><span class="co"># Here, outcome is associated with covariates but unassociated with microbiota</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a><span class="co"># Approximately 33% censoring</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>SurvTime &lt;-<span class="st"> </span><span class="kw">rexp</span>(<span class="dv">60</span>, (<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>Smoker <span class="op">+</span><span class="st"> </span>Male))</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a>CensTime &lt;-<span class="st"> </span><span class="kw">rexp</span>(<span class="dv">60</span>, <span class="fl">0.75</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true"></a>Delta &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(SurvTime <span class="op">&lt;=</span><span class="st"> </span>CensTime )</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true"></a>ObsTime &lt;-<span class="st"> </span><span class="kw">pmin</span>(SurvTime, CensTime)</span></code></pre></div>
 <p>The p-value for the test may be generated using permutation or Davies’ exact method. Davies’ exact method, which computes the p-value based on a mixture of chi-square distributions, is used when “perm = F”. We use a small-sample correction to account for the modest sample sizes and sparse OTU count matrices that often result from studies of the microbiome.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="co"># Davies&#39; exact method </span></span>
-<span id="cb12-2"><a href="#cb12-2"></a><span class="kw">MiRKATS</span>(<span class="dt">obstime =</span> ObsTime, <span class="dt">delta =</span> Delta, <span class="dt">X =</span> <span class="kw">cbind</span>(Smoker, Male, anti), <span class="dt">Ks =</span> Ks, </span>
-<span id="cb12-3"><a href="#cb12-3"></a>        <span class="dt">perm =</span> F, <span class="dt">returnKRV =</span> T, <span class="dt">returnR2 =</span> T)</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="co"># Davies&#39; exact method </span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="kw">MiRKATS</span>(<span class="dt">obstime =</span> ObsTime, <span class="dt">delta =</span> Delta, <span class="dt">X =</span> <span class="kw">cbind</span>(Smoker, Male, anti), <span class="dt">Ks =</span> Ks, </span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>        <span class="dt">perm =</span> F, <span class="dt">omnibus =</span> <span class="st">&quot;Cauchy&quot;</span>, <span class="dt">returnKRV =</span> T, <span class="dt">returnR2 =</span> T)</span></code></pre></div>
 <pre><code>## $p_values
 ##   K.weighted K.unweighted         K.BC 
-##   0.07778749   0.47512860   0.08902296 
+##    0.3483251    0.7296863    0.4977169 
 ## 
 ## $omnibus_p
-## [1] 0.1361361
+## [1] 0.5376518
 ## 
 ## $KRV
 ##   K.weighted K.unweighted         K.BC 
-## 0.0016499209 0.0008857490 0.0003264481 
+## 0.0009964858 0.0006155559 0.0002595744 
 ## 
 ## $R2
 ##   K.weighted K.unweighted         K.BC 
-##  0.005752281  0.013141469  0.006587602</code></pre>
-<p>Using “perm = T” indicates that a permutation p-value should be calculated. Overall, permutation is recommended when the sample size is small, as Davies’ method may be slightly anti-conservative with very small sample sizes. MiRKAT-S will generate a warning when permutation is not used for sample sizes <span class="math inline">\(n \leq 50\)</span>. “nperm” indicates the number of permutations to perform to generate the p-value (default = 1000)</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a><span class="co"># Permutation </span></span>
-<span id="cb14-2"><a href="#cb14-2"></a><span class="kw">MiRKATS</span>(<span class="dt">obstime =</span> ObsTime, <span class="dt">delta =</span> Delta, <span class="dt">X =</span> <span class="kw">cbind</span>(Smoker, Male, anti), <span class="dt">Ks =</span> Ks, </span>
-<span id="cb14-3"><a href="#cb14-3"></a>        <span class="dt">perm =</span> T, <span class="dt">returnKRV =</span> T, <span class="dt">returnR2 =</span> T)</span></code></pre></div>
+##  0.002098244  0.006346840  0.004165073</code></pre>
+<p>Using “perm = T” indicates that a permutation p-value should be calculated for each kernel-specific test. Overall, permutation is recommended when the sample size is small, as Davies’ method may be slightly anti-conservative with very small sample sizes. MiRKAT-S will generate a warning when permutation is not used for sample sizes <span class="math inline">\(n \leq 50\)</span>. “nperm” indicates the number of permutations to perform to generate the p-value (default = 1000).</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="co"># Permutation </span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a><span class="kw">MiRKATS</span>(<span class="dt">obstime =</span> ObsTime, <span class="dt">delta =</span> Delta, <span class="dt">X =</span> <span class="kw">cbind</span>(Smoker, Male, anti), <span class="dt">Ks =</span> Ks, </span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>        <span class="dt">perm =</span> T, <span class="dt">omnibus =</span> <span class="st">&quot;Cauchy&quot;</span>, <span class="dt">returnKRV =</span> T, <span class="dt">returnR2 =</span> T)</span></code></pre></div>
 <pre><code>## $p_values
 ##   K.weighted K.unweighted         K.BC 
-##   0.07707708   0.45145145   0.09409409 
+##    0.3823824    0.7367367    0.5625626 
 ## 
 ## $omnibus_p
-## [1] 0.1341341
+## [1] 0.5761565
 ## 
 ## $KRV
 ##   K.weighted K.unweighted         K.BC 
-## 0.0016499209 0.0008857490 0.0003264481 
+## 0.0009964858 0.0006155559 0.0002595744 
 ## 
 ## $R2
 ##   K.weighted K.unweighted         K.BC 
-##  0.005752281  0.013141469  0.006587602</code></pre>
-<p>The omnibus p-value is similar to that of MiRKAT, in which residual permutation is used to create a null distribution of p-values, and the minimum p-value from the original MiRKAT-S analysis is tested against this distribution as the test statistic of the omnibus test. The omnibus test is described further at <a href="https://github.com/hk1785/OMiSA" class="uri">https://github.com/hk1785/OMiSA</a> (Koh 2018, DOI: <a href="https://doi.org/10.1186/s12864-018-4599-8" class="uri">https://doi.org/10.1186/s12864-018-4599-8</a>).</p>
+##  0.002098244  0.006346840  0.004165073</code></pre>
+<p>As above, the omnibus p-value may be generated either using residual permutation to create a null distribution of minimum p-values, and the minimum p-value from the original MiRKAT-S analysis is tested against this distribution as the test statistic of the omnibus test, or using the Cauchy combination test. The permutation-based omnibus test is described further at <a href="https://github.com/hk1785/OMiSA" class="uri">https://github.com/hk1785/OMiSA</a> (Koh 2018, DOI: <a href="https://doi.org/10.1186/s12864-018-4599-8" class="uri">https://doi.org/10.1186/s12864-018-4599-8</a>).</p>
 </div>
 </div>
 <div id="mmirkat-multivariate-continuous-outcome" class="section level2">
@@ -601,11 +612,11 @@ Similar to Jaccard, but uses counts
 <p>MMiRKAT is designed to test the association between the microbiome and a low-dimensional multivariate continuous outcome. For structured or high dimensional outcomes, the kernel RV test (KRV) is recommended instead, as demonstrated in the next section.</p>
 <p>We again use Charlson’s throat microbiome data to demonstrate the use of MMiRKAT. We generate multivariate outcomes <span class="math inline">\(Y \sim N_{3n}(0, I_{3n})\)</span>.</p>
 <p>MMiRKAT uses a small-sample correction procedure for p-value calculation. There is no omnibus test in MMiRKAT; only kernel-specific p-values and, optionally, the KRV and R-squared statistics are returned.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb16-2"><a href="#cb16-2"></a>n &lt;-<span class="st"> </span><span class="kw">nrow</span>(throat.otu.tab)</span>
-<span id="cb16-3"><a href="#cb16-3"></a>Y &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(n<span class="op">*</span><span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">1</span>), n, <span class="dv">3</span>)</span>
-<span id="cb16-4"><a href="#cb16-4"></a><span class="kw">MMiRKAT</span>(<span class="dt">Y =</span> Y, <span class="dt">X =</span> <span class="kw">cbind</span>(Male, anti), <span class="dt">Ks =</span> Ks, </span>
-<span id="cb16-5"><a href="#cb16-5"></a>        <span class="dt">returnKRV =</span> <span class="ot">TRUE</span>, <span class="dt">returnR2 =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>n &lt;-<span class="st"> </span><span class="kw">nrow</span>(throat.otu.tab)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>Y &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(n<span class="op">*</span><span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">1</span>), n, <span class="dv">3</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a><span class="kw">MMiRKAT</span>(<span class="dt">Y =</span> Y, <span class="dt">X =</span> <span class="kw">cbind</span>(Male, anti), <span class="dt">Ks =</span> Ks, </span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true"></a>        <span class="dt">returnKRV =</span> <span class="ot">TRUE</span>, <span class="dt">returnR2 =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
 <pre><code>## $p_values
 ##   K.weighted K.unweighted         K.BC 
 ##    0.1073553    0.2126433    0.2922759 
@@ -622,18 +633,20 @@ Similar to Jaccard, but uses counts
 <h2>KRV: High-Dimensional Structured Outcome</h2>
 <p>KRV (kernel RV coefficient) is designed to evaluate the association between microbiome composition and a structured, potentially high-dimensional phenotype, such as gene expression of a set of genes which are functionally related. The KRV statistic can capture nonlinear associations and complex relationships within the individual data types and between the complex multivariate phenotype and microbiome composition by measuring general dependency.</p>
 <p>Two kernels are involved in KRV statistics: one kernel for microbiome composition, which can be obtained by transforming the distance metrics as in the previous sections, and one kernel capturing similarities in the phenotypes. As an alternative, KRV can also take as input a kernel matrix for microbiome composition, a multivariate phenotype y, and a set of additional covariates X. In this case, a multivariate regression is carried out, and then the residuals of this regression are subsequently used to construct a Gaussian or linear kernel matrix.</p>
+<p>An omnibus test has also been implemented for the KRV function. This omnibus test is different from the other omnibus tests in the package, as it creates an “omnibus kernel matrix” and then performs the KRV analysis on that omnibus kernel (option: omnibus = “kernel_om”). The omnibus kernel matrix is constructed via the second formulation in Zhan et al (2017), an unsupervised weighted combination of kernels that the authors found to have the best performance across a range of simulation settings. Specifically, the omnibus kernel is defined as <span class="math display">\[K_{om} = \sum_{i=1}^m \frac{K_i}{tr(K_i)}.\]</span> The p-value from this single omnibus kernel is returned as the omnibus p-value for KRV. Alternatively, the Cauchy combination test may be used (option: omnibus = “Cauchy”).</p>
 <div id="create-the-kernel-matrix-of-simulated-data" class="section level3">
 <h3>Create the Kernel Matrix of Simulated Data</h3>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb18-2"><a href="#cb18-2"></a>rho =<span class="st"> </span><span class="fl">0.2</span></span>
-<span id="cb18-3"><a href="#cb18-3"></a>Va =<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rep</span>(rho, (<span class="dv">2</span><span class="op">*</span>n)<span class="op">^</span><span class="dv">2</span>), <span class="dv">2</span><span class="op">*</span>n, <span class="dv">2</span><span class="op">*</span>n)<span class="op">+</span><span class="kw">diag</span>(<span class="dv">1</span><span class="op">-</span>rho, <span class="dv">2</span><span class="op">*</span>n)</span>
-<span id="cb18-4"><a href="#cb18-4"></a>G =<span class="st"> </span><span class="kw">mvrnorm</span>(n, <span class="kw">rep</span>(<span class="dv">0</span>, <span class="dv">2</span><span class="op">*</span>n), Va)</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a>rho =<span class="st"> </span><span class="fl">0.2</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>Va =<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rep</span>(rho, (<span class="dv">2</span><span class="op">*</span>n)<span class="op">^</span><span class="dv">2</span>), <span class="dv">2</span><span class="op">*</span>n, <span class="dv">2</span><span class="op">*</span>n)<span class="op">+</span><span class="kw">diag</span>(<span class="dv">1</span><span class="op">-</span>rho, <span class="dv">2</span><span class="op">*</span>n)</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a>G =<span class="st"> </span><span class="kw">mvrnorm</span>(n, <span class="kw">rep</span>(<span class="dv">0</span>, <span class="dv">2</span><span class="op">*</span>n), Va)</span></code></pre></div>
 </div>
 <div id="testing-using-an-outcome-kernel-matrix" class="section level3">
 <h3>Testing Using an Outcome Kernel Matrix</h3>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a>lin.K.y =<span class="st"> </span>G <span class="op">%*%</span><span class="st"> </span><span class="kw">t</span>(G)</span>
-<span id="cb19-2"><a href="#cb19-2"></a><span class="kw">KRV</span>(<span class="dt">kernels.otu =</span> Ks, <span class="dt">kernel.y =</span> lin.K.y, </span>
-<span id="cb19-3"><a href="#cb19-3"></a>    <span class="dt">returnKRV =</span> <span class="ot">TRUE</span>, <span class="dt">returnR2 =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a>lin.K.y =<span class="st"> </span>G <span class="op">%*%</span><span class="st"> </span><span class="kw">t</span>(G)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a><span class="kw">KRV</span>(<span class="dt">kernels.otu =</span> Ks, <span class="dt">kernel.y =</span> lin.K.y, </span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a>    <span class="dt">omnibus =</span> <span class="st">&quot;kernel_om&quot;</span>, </span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true"></a>    <span class="dt">returnKRV =</span> <span class="ot">TRUE</span>, <span class="dt">returnR2 =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
 <pre><code>## $p_values
 ##   K.weighted K.unweighted         K.BC 
 ##    0.6231597    0.4956971    0.6321714 
@@ -651,20 +664,13 @@ Similar to Jaccard, but uses counts
 </div>
 <div id="testing-with-multiple-kernels-using-the-covariate-option" class="section level3">
 <h3>Testing with Multiple Kernels, Using the Covariate Option</h3>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="kw">KRV</span>(<span class="dt">y =</span> G, <span class="dt">X =</span> <span class="kw">cbind</span>(Male, anti), <span class="dt">kernels.otu =</span> Ks, <span class="dt">kernel.y =</span> <span class="st">&quot;linear&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="kw">KRV</span>(<span class="dt">y =</span> G, <span class="dt">X =</span> <span class="kw">cbind</span>(Male, anti), <span class="dt">kernels.otu =</span> Ks, <span class="dt">kernel.y =</span> <span class="st">&quot;linear&quot;</span>)</span></code></pre></div>
 <pre><code>## $p_values
 ##   K.weighted K.unweighted         K.BC 
 ##    0.6228336    0.5955235    0.6499288 
 ## 
 ## $omnibus_p
-## [1] 0.6423704
-## 
-## $KRV
-## NULL
-## 
-## $R2
-## NULL</code></pre>
-<p>An omnibus test has also been implemented for the KRV function. This omnibus test is different from the other omnibus tests in the package, as it creates an “omnibus kernel matrix” and then performs the KRV analysis on that omnibus kernel. The omnibus kernel matrix is constructed via the second formulation in Zhan et al (2017), an unsupervised weighted combination of kernels that the authors found to have the best performance across a range of simulation settings. Specifically, the omnibus kernel is defined as <span class="math display">\[K_{om} = \sum_{i=1}^m \frac{K_i}{tr(K_i)}.\]</span> The p-value from this single omnibus kernel is returned as the omnibus p-value for KRV.</p>
+## [1] 0.6423704</code></pre>
 </div>
 </div>
 <div id="robust-mirkat" class="section level2">
@@ -673,36 +679,24 @@ Similar to Jaccard, but uses counts
 <p>We additionally note that quantile regression has lower power than robust regression in every scenario considered, and hence recommend use of MiRKAT-R in most circumstances. Both functions call the KRV function once an outcome kernel matrix has been created using quantile or robust regression, so the omnibus tests for MiRKAT.Q and MiRKAT.R are the same as for KRV.</p>
 <div id="mirkat.r-continuous-outcomes-with-robust-linear-regression" class="section level3">
 <h3>MiRKAT.R: Continuous Outcomes with Robust Linear Regression</h3>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a>y &lt;-<span class="st"> </span><span class="kw">rchisq</span>(<span class="kw">nrow</span>(K.weighted), <span class="dv">1</span>)</span>
-<span id="cb23-2"><a href="#cb23-2"></a><span class="kw">MiRKAT.R</span>(<span class="dt">y =</span> y, <span class="dt">X =</span> <span class="kw">cbind</span>(Male, anti), <span class="dt">Ks =</span> Ks)</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a>y &lt;-<span class="st"> </span><span class="kw">rchisq</span>(<span class="kw">nrow</span>(K.weighted), <span class="dv">1</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a><span class="kw">MiRKAT.R</span>(<span class="dt">y =</span> y, <span class="dt">X =</span> <span class="kw">cbind</span>(Male, anti), <span class="dt">Ks =</span> Ks)</span></code></pre></div>
 <pre><code>## $p_values
 ##   K.weighted K.unweighted         K.BC 
 ##    0.5502230    0.9116325    0.3288858 
 ## 
 ## $omnibus_p
-## [1] 0.5506275
-## 
-## $KRV
-## NULL
-## 
-## $R2
-## NULL</code></pre>
+## [1] 0.5506275</code></pre>
 </div>
 <div id="mirkat.q-continuous-outcomes-with-quantile-regression" class="section level3">
 <h3>MiRKAT.Q: Continuous Outcomes with Quantile Regression</h3>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1"></a><span class="kw">MiRKAT.Q</span>(<span class="dt">y =</span> y, <span class="dt">X=</span> <span class="kw">cbind</span>(Male, anti), <span class="dt">Ks =</span> Ks)</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="kw">MiRKAT.Q</span>(<span class="dt">y =</span> y, <span class="dt">X=</span> <span class="kw">cbind</span>(Male, anti), <span class="dt">Ks =</span> Ks)</span></code></pre></div>
 <pre><code>## $p_values
 ##   K.weighted K.unweighted         K.BC 
 ##    0.6362740    0.4675527    0.6828106 
 ## 
 ## $omnibus_p
-## [1] 0.6336712
-## 
-## $KRV
-## NULL
-## 
-## $R2
-## NULL</code></pre>
+## [1] 0.6336712</code></pre>
 </div>
 </div>
 <div id="cskat-longitudinalcorrelated-data-continuous-outcomes" class="section level2">
@@ -711,37 +705,37 @@ Similar to Jaccard, but uses counts
 <p>We switch to a different simulation approach for these last two functions, as they both deal with correlated data.</p>
 <div id="prepare-the-data" class="section level3">
 <h3>Prepare the Data</h3>
-<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a><span class="co"># Import example microbiome data with Gaussian traits</span></span>
-<span id="cb27-2"><a href="#cb27-2"></a><span class="kw">data</span>(nordata)</span>
-<span id="cb27-3"><a href="#cb27-3"></a></span>
-<span id="cb27-4"><a href="#cb27-4"></a><span class="co"># Extract microbiome and meta information</span></span>
-<span id="cb27-5"><a href="#cb27-5"></a>otu.tab &lt;-<span class="st"> </span>nordata<span class="op">$</span>nor.otu.tab</span>
-<span id="cb27-6"><a href="#cb27-6"></a>tree &lt;-<span class="st"> </span>nordata<span class="op">$</span>nor.tree</span>
-<span id="cb27-7"><a href="#cb27-7"></a>meta &lt;-<span class="st"> </span>nordata<span class="op">$</span>nor.meta</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true"></a><span class="co"># Import example microbiome data with Gaussian traits</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true"></a><span class="kw">data</span>(nordata)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true"></a><span class="co"># Extract microbiome and meta information</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true"></a>otu.tab &lt;-<span class="st"> </span>nordata<span class="op">$</span>nor.otu.tab</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true"></a>tree &lt;-<span class="st"> </span>nordata<span class="op">$</span>nor.tree</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true"></a>meta &lt;-<span class="st"> </span>nordata<span class="op">$</span>nor.meta</span></code></pre></div>
 </div>
 <div id="create-the-unifrac-distances-1" class="section level3">
 <h3>Create the UniFrac Distances</h3>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a>Ds &lt;-<span class="st"> </span><span class="kw">GUniFrac</span>(otu.tab, tree, <span class="dt">alpha=</span><span class="kw">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>))<span class="op">$</span>unifracs</span>
-<span id="cb28-2"><a href="#cb28-2"></a> </span>
-<span id="cb28-3"><a href="#cb28-3"></a>D.unweighted &lt;-<span class="st"> </span>Ds[,,<span class="st">&quot;d_UW&quot;</span>]</span>
-<span id="cb28-4"><a href="#cb28-4"></a>D.generalized &lt;-<span class="st"> </span>Ds[,,<span class="st">&quot;d_0.5&quot;</span>]</span>
-<span id="cb28-5"><a href="#cb28-5"></a>D.weighted &lt;-<span class="st"> </span>Ds[,,<span class="st">&quot;d_1&quot;</span>]</span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true"></a>Ds &lt;-<span class="st"> </span><span class="kw">GUniFrac</span>(otu.tab, tree, <span class="dt">alpha=</span><span class="kw">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>))<span class="op">$</span>unifracs</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true"></a> </span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true"></a>D.unweighted &lt;-<span class="st"> </span>Ds[,,<span class="st">&quot;d_UW&quot;</span>]</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true"></a>D.generalized &lt;-<span class="st"> </span>Ds[,,<span class="st">&quot;d_0.5&quot;</span>]</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true"></a>D.weighted &lt;-<span class="st"> </span>Ds[,,<span class="st">&quot;d_1&quot;</span>]</span></code></pre></div>
 </div>
 <div id="convert-distance-to-kernel-matrices-1" class="section level3">
 <h3>Convert Distance to Kernel Matrices</h3>
-<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1"></a>K.unweighted &lt;-<span class="st"> </span><span class="kw">D2K</span>(D.unweighted)</span>
-<span id="cb29-2"><a href="#cb29-2"></a>K.generalized &lt;-<span class="st"> </span><span class="kw">D2K</span>(D.generalized)</span>
-<span id="cb29-3"><a href="#cb29-3"></a>K.weighted &lt;-<span class="st"> </span><span class="kw">D2K</span>(D.weighted)</span>
-<span id="cb29-4"><a href="#cb29-4"></a>Ks &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">K.weighted =</span> K.weighted, </span>
-<span id="cb29-5"><a href="#cb29-5"></a>           <span class="dt">K.unweighted =</span> K.unweighted, </span>
-<span id="cb29-6"><a href="#cb29-6"></a>           <span class="dt">K.generalized =</span> K.generalized)</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true"></a>K.unweighted &lt;-<span class="st"> </span><span class="kw">D2K</span>(D.unweighted)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true"></a>K.generalized &lt;-<span class="st"> </span><span class="kw">D2K</span>(D.generalized)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true"></a>K.weighted &lt;-<span class="st"> </span><span class="kw">D2K</span>(D.weighted)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true"></a>Ks &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">K.weighted =</span> K.weighted, </span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true"></a>           <span class="dt">K.unweighted =</span> K.unweighted, </span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true"></a>           <span class="dt">K.generalized =</span> K.generalized)</span></code></pre></div>
 </div>
 <div id="testing-using-multiple-kernels-1" class="section level3">
 <h3>Testing Using Multiple Kernels</h3>
-<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a><span class="kw">CSKAT</span>(<span class="dt">formula.H0 =</span> y <span class="op">~</span><span class="st"> </span>x1 <span class="op">+</span><span class="st"> </span>x2 <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">|</span><span class="st"> </span>id), <span class="dt">data =</span> meta, <span class="dt">Ks =</span> Ks)</span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true"></a><span class="kw">CSKAT</span>(<span class="dt">formula.H0 =</span> y <span class="op">~</span><span class="st"> </span>x1 <span class="op">+</span><span class="st"> </span>x2 <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">|</span><span class="st"> </span>id), <span class="dt">data =</span> meta, <span class="dt">Ks =</span> Ks)</span></code></pre></div>
 <pre><code>## $p_values
 ##    K.weighted  K.unweighted K.generalized 
-##   0.000158162   0.501216086   0.023604631 
+##  0.0001581617  0.5012159556  0.0236046037 
 ## 
 ## $omnibus_p
 ## [1] 0.001</code></pre>
@@ -754,8 +748,8 @@ Similar to Jaccard, but uses counts
 <div id="example-1.-gaussian-traits-e.g.-body-mass-index" class="section level3">
 <h3>Example 1. Gaussian traits (e.g., body mass index)</h3>
 <p>GLMM-MiRKAT returns kernel-specific and omnibus p-values. No measures of effect size are available for GLMM-MiRKAT.</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a><span class="co"># GLMM-MiRKAT with permutation test</span></span>
-<span id="cb32-2"><a href="#cb32-2"></a><span class="kw">GLMMMiRKAT</span>(<span class="dt">y =</span> meta<span class="op">$</span>y, <span class="dt">X =</span> <span class="kw">cbind</span>(meta<span class="op">$</span>x1, meta<span class="op">$</span>x2), <span class="dt">id =</span> meta<span class="op">$</span>id, <span class="dt">Ks =</span> Ks, <span class="dt">model =</span> <span class="st">&quot;gaussian&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true"></a><span class="co"># GLMM-MiRKAT with permutation test</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true"></a><span class="kw">GLMMMiRKAT</span>(<span class="dt">y =</span> meta<span class="op">$</span>y, <span class="dt">X =</span> <span class="kw">cbind</span>(meta<span class="op">$</span>x1, meta<span class="op">$</span>x2), <span class="dt">id =</span> meta<span class="op">$</span>id, <span class="dt">Ks =</span> Ks, <span class="dt">model =</span> <span class="st">&quot;gaussian&quot;</span>)</span></code></pre></div>
 <pre><code>## $p_values
 ##    K.weighted  K.unweighted K.generalized 
 ##    0.00099980    0.53029394    0.07318536 
@@ -763,32 +757,32 @@ Similar to Jaccard, but uses counts
 ## $omnibus_p
 ## [1] 0.00179964</code></pre>
 <p>With options model = “gaussian” and method = “davies”, GLMM-MiRKAT is equivalent to CSKAT (as described above).</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a><span class="co"># GLMM-MiRKAT with Davies p-value (equivalent to CSKAT) </span></span>
-<span id="cb34-2"><a href="#cb34-2"></a><span class="kw">GLMMMiRKAT</span>(<span class="dt">y =</span> meta<span class="op">$</span>y, <span class="dt">X =</span> <span class="kw">cbind</span>(meta<span class="op">$</span>x1, meta<span class="op">$</span>x2), <span class="dt">Ks =</span> Ks, </span>
-<span id="cb34-3"><a href="#cb34-3"></a>           <span class="dt">id =</span> meta<span class="op">$</span>id, <span class="dt">model =</span> <span class="st">&quot;gaussian&quot;</span>, <span class="dt">method =</span> <span class="st">&quot;davies&quot;</span>, </span>
-<span id="cb34-4"><a href="#cb34-4"></a>           <span class="dt">formula.H0 =</span> y <span class="op">~</span><span class="st"> </span><span class="kw">cbind</span>(meta<span class="op">$</span>x1, meta<span class="op">$</span>x2) <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">|</span><span class="st"> </span>meta<span class="op">$</span>id), </span>
-<span id="cb34-5"><a href="#cb34-5"></a>           <span class="dt">slope =</span> <span class="ot">FALSE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true"></a><span class="co"># GLMM-MiRKAT with Davies p-value (equivalent to CSKAT) </span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true"></a><span class="kw">GLMMMiRKAT</span>(<span class="dt">y =</span> meta<span class="op">$</span>y, <span class="dt">X =</span> <span class="kw">cbind</span>(meta<span class="op">$</span>x1, meta<span class="op">$</span>x2), <span class="dt">Ks =</span> Ks, </span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true"></a>           <span class="dt">id =</span> meta<span class="op">$</span>id, <span class="dt">model =</span> <span class="st">&quot;gaussian&quot;</span>, <span class="dt">method =</span> <span class="st">&quot;davies&quot;</span>, </span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true"></a>           <span class="dt">formula.H0 =</span> y <span class="op">~</span><span class="st"> </span><span class="kw">cbind</span>(meta<span class="op">$</span>x1, meta<span class="op">$</span>x2) <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">|</span><span class="st"> </span>meta<span class="op">$</span>id), </span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true"></a>           <span class="dt">slope =</span> <span class="ot">FALSE</span>)</span></code></pre></div>
 <pre><code>## $p_values
 ##    K.weighted  K.unweighted K.generalized 
-##   0.000158162   0.501216086   0.023604631 
+##  0.0001581617  0.5012159556  0.0236046037 
 ## 
 ## $omnibus_p
 ## [1] 0.00019996</code></pre>
 </div>
 <div id="example-2.-binomial-traits-e.g.-disease-status-treatmentplacebo" class="section level3">
 <h3>Example 2. Binomial traits (e.g., disease status, treatment/placebo)</h3>
-<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1"></a> <span class="co"># Import microbiome data with binomial traits</span></span>
-<span id="cb36-2"><a href="#cb36-2"></a> <span class="kw">data</span>(bindata)</span>
-<span id="cb36-3"><a href="#cb36-3"></a></span>
-<span id="cb36-4"><a href="#cb36-4"></a><span class="co"># Extract microbiome and meta information</span></span>
-<span id="cb36-5"><a href="#cb36-5"></a><span class="co"># (Microbiome is the same as for Gaussian outcomes)</span></span>
-<span id="cb36-6"><a href="#cb36-6"></a>otu.tab &lt;-<span class="st"> </span>bindata<span class="op">$</span>bin.otu.tab</span>
-<span id="cb36-7"><a href="#cb36-7"></a>tree &lt;-<span class="st"> </span>bindata<span class="op">$</span>bin.tree</span>
-<span id="cb36-8"><a href="#cb36-8"></a>meta &lt;-<span class="st"> </span>bindata<span class="op">$</span>bin.meta</span>
-<span id="cb36-9"><a href="#cb36-9"></a> </span>
-<span id="cb36-10"><a href="#cb36-10"></a><span class="co"># Run GLMM-MiRKAT</span></span>
-<span id="cb36-11"><a href="#cb36-11"></a><span class="kw">GLMMMiRKAT</span>(meta<span class="op">$</span>y, <span class="dt">X =</span> <span class="kw">cbind</span>(meta<span class="op">$</span>x1, meta<span class="op">$</span>x2), <span class="dt">id =</span> meta<span class="op">$</span>id, </span>
-<span id="cb36-12"><a href="#cb36-12"></a>           <span class="dt">Ks =</span> Ks, <span class="dt">model =</span> <span class="st">&quot;binomial&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true"></a> <span class="co"># Import microbiome data with binomial traits</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true"></a> <span class="kw">data</span>(bindata)</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true"></a></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true"></a><span class="co"># Extract microbiome and meta information</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true"></a><span class="co"># (Microbiome is the same as for Gaussian outcomes)</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true"></a>otu.tab &lt;-<span class="st"> </span>bindata<span class="op">$</span>bin.otu.tab</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true"></a>tree &lt;-<span class="st"> </span>bindata<span class="op">$</span>bin.tree</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true"></a>meta &lt;-<span class="st"> </span>bindata<span class="op">$</span>bin.meta</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true"></a> </span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true"></a><span class="co"># Run GLMM-MiRKAT</span></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true"></a><span class="kw">GLMMMiRKAT</span>(meta<span class="op">$</span>y, <span class="dt">X =</span> <span class="kw">cbind</span>(meta<span class="op">$</span>x1, meta<span class="op">$</span>x2), <span class="dt">id =</span> meta<span class="op">$</span>id, </span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true"></a>           <span class="dt">Ks =</span> Ks, <span class="dt">model =</span> <span class="st">&quot;binomial&quot;</span>)</span></code></pre></div>
 <pre><code>## $p_values
 ##    K.weighted  K.unweighted K.generalized 
 ##     0.9162168     0.6376725     0.8384323 
@@ -798,18 +792,18 @@ Similar to Jaccard, but uses counts
 </div>
 <div id="example-3.-poisson-traits-e.g.-number-of-tumors" class="section level3">
 <h3>Example 3. Poisson traits (e.g., number of tumors)</h3>
-<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a><span class="co"># Import microbiome data with Poisson traits</span></span>
-<span id="cb38-2"><a href="#cb38-2"></a><span class="kw">data</span>(poisdata)</span>
-<span id="cb38-3"><a href="#cb38-3"></a></span>
-<span id="cb38-4"><a href="#cb38-4"></a><span class="co"># Extract microbiome and meta information</span></span>
-<span id="cb38-5"><a href="#cb38-5"></a><span class="co"># (Microbiome is again the same)</span></span>
-<span id="cb38-6"><a href="#cb38-6"></a>otu.tab &lt;-<span class="st"> </span>poisdata<span class="op">$</span>pois.otu.tab</span>
-<span id="cb38-7"><a href="#cb38-7"></a>tree &lt;-<span class="st"> </span>poisdata<span class="op">$</span>pois.tree</span>
-<span id="cb38-8"><a href="#cb38-8"></a>meta &lt;-<span class="st"> </span>poisdata<span class="op">$</span>pois.meta</span>
-<span id="cb38-9"><a href="#cb38-9"></a></span>
-<span id="cb38-10"><a href="#cb38-10"></a><span class="co"># Run GLMM-MiRKAT</span></span>
-<span id="cb38-11"><a href="#cb38-11"></a><span class="kw">GLMMMiRKAT</span>(meta<span class="op">$</span>y, <span class="dt">X =</span> <span class="kw">cbind</span>(meta<span class="op">$</span>x1, meta<span class="op">$</span>x2), <span class="dt">id =</span> meta<span class="op">$</span>id, </span>
-<span id="cb38-12"><a href="#cb38-12"></a>           <span class="dt">Ks =</span> Ks, <span class="dt">model =</span> <span class="st">&quot;poisson&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true"></a><span class="co"># Import microbiome data with Poisson traits</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true"></a><span class="kw">data</span>(poisdata)</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true"></a></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true"></a><span class="co"># Extract microbiome and meta information</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true"></a><span class="co"># (Microbiome is again the same)</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true"></a>otu.tab &lt;-<span class="st"> </span>poisdata<span class="op">$</span>pois.otu.tab</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true"></a>tree &lt;-<span class="st"> </span>poisdata<span class="op">$</span>pois.tree</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true"></a>meta &lt;-<span class="st"> </span>poisdata<span class="op">$</span>pois.meta</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true"></a></span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true"></a><span class="co"># Run GLMM-MiRKAT</span></span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true"></a><span class="kw">GLMMMiRKAT</span>(meta<span class="op">$</span>y, <span class="dt">X =</span> <span class="kw">cbind</span>(meta<span class="op">$</span>x1, meta<span class="op">$</span>x2), <span class="dt">id =</span> meta<span class="op">$</span>id, </span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true"></a>           <span class="dt">Ks =</span> Ks, <span class="dt">model =</span> <span class="st">&quot;poisson&quot;</span>)</span></code></pre></div>
 <pre><code>## $p_values
 ##    K.weighted  K.unweighted K.generalized 
 ##     0.1425715     0.1737652     0.2523495 

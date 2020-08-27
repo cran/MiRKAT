@@ -10,6 +10,7 @@ MiRKAT_binary(
   Ks,
   method = "davies",
   family = "binomial",
+  omnibus = "permutation",
   nperm = 999,
   returnKRV = FALSE,
   returnR2 = FALSE
@@ -32,6 +33,9 @@ p-value calculation.}
 
 \item{family}{A string describing the error distribution and link function to be used in the linear model.}
 
+\item{omnibus}{A string equal to either "Cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
+to use the Cauchy combination test or residual permutation to generate the omnibus p-value.}
+
 \item{nperm}{the number of permutations if method = "permutation" or when multiple kernels are considered. if method = "davies" 
 or "moment", nperm is ignored.}
 
@@ -43,7 +47,7 @@ or "moment", nperm is ignored.}
 If only one candidate kernel matrix is considered, returns a list containing the p-value for the candidate kernel matrix. 
 If more than one candidate kernel matrix is considered, returns a list with two elements: the individual p-values for
 each candidate kernel matrix, and the omnibus p-value. 
-    \item{indivP}{p-value for each candidate kernel matrix}
+    \item{p_values}{p-value for each candidate kernel matrix}
     \item{omnibus_p}{omnibus p-value if multiple kernel matrices are considered}
     \item{KRV}{A vector of kernel RV statistics (a measure of effect size), one for each candidate kernel matrix. Only returned if returnKRV = TRUE}
     \item{R2}{A vector of R-squared statistics, one for each candidate kernel matrix. Only returned if returnR2 = TRUE}

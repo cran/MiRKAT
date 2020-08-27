@@ -9,6 +9,7 @@ KRV(
   X = NULL,
   kernels.otu,
   kernel.y,
+  omnibus = "kernel_om",
   returnKRV = FALSE,
   returnR2 = FALSE
 )
@@ -26,6 +27,9 @@ constructed from microbiome data, such as by transforming from a distance metric
 \item{kernel.y}{Either a numerical n by n kernel matrix for phenotypes or a method to compute the kernel of phenotype. Methods are "Gaussian" or "linear". 
 A Gaussian kernel (kernel.y="Gaussian") can capture the general relationship between microbiome and phenotypes; a linear kernel (kernel.y="linear") 
 may be preferred if the underlying relationship is close to linear.}
+
+\item{omnibus}{A string equal to either "Cauchy" or "kernel_om" (or nonambiguous abbreviations thereof), specifying whether 
+to use the Cauchy combination test or an omnibus kernel to generate the omnibus p-value.}
 
 \item{returnKRV}{A logical indicating whether to return the KRV statistic. Defaults to FALSE.}
 

@@ -51,36 +51,36 @@ inner.KRV <- function(y = NULL, X = NULL, kernel.otu, kernel.y, returnKRV = FALS
   if(is.matrix(kernel.y)){
     n = nrow(kernel.otu)
     if(!is.null(X)){
-      warning("Covariates can't be adjusted for in this case, and hence argument \"X\" will be ignored.")
+      warning("Covariates can't be adjusted for in this case, and hence argument \"X\" will be ignored.\n")
     }
     if(!is.null(y)){
-      warning("No need to provide phenotype matrix when a phenotype kernel is provided, and hence argument \"y\" will be ignored.")
+      warning("When a phenotype kernel is provided, argument \"y\" will be ignored.\n")
     }
     if(ncol(kernel.otu)!=n|nrow(kernel.y)!=n|ncol(kernel.y)!=n){
-      stop("kernel matrices need to be n x n, where n is the sample size \n ")
+      stop("Kernel matrices need to be n x n, where n is the sample size.\n ")
     }
   }
   
   if(!is.matrix(kernel.y)){
     if (!(kernel.y %in%  c("Gaussian", "linear"))){
-      stop("Please choose kernel.y = \"Gaussian\" or \"linear\", or enter a kernel matrix for \"kernel.y\"")
+      stop("Please choose kernel.y = \"Gaussian\" or \"linear\", or enter a kernel matrix for \"kernel.y\".\n")
     }
     if(is.null(y)){
-      stop("Please enter a phenotype matrix for argument \"y\" or enter a kernel matrix for argument \"kernel.y\" ")
+      stop("Please enter a phenotype matrix for argument \"y\" or enter a kernel matrix for argument \"kernel.y\".\n")
     }
     n = NROW(y)
     if(nrow(kernel.otu)!=n|ncol(kernel.otu)!=n){
-      stop("kernel matrix needs to be n x n, where n is the sample size \n ")
+      stop("Kernel matrix needs to be n x n, where n is the sample size. \n ")
     }
     if (any(is.na(y))){
       ids = which(is.na(y))
-      stop(paste("subjects", ids, "has missing response, please remove before proceed \n"))
+      stop(paste("Missing response for subject(s)", ids, "- please remove before proceeding. \n"))
     }
     if (!is.null(X)){
       if (any(is.na(X))){
-        stop("NAs in covariates X, please impute or remove subjects which has missing covariates values") 
+        stop("NAs in covariates X, please impute or remove subjects with missing covariates values.\n") 
       }  
-      if(NROW(X)!= NROW(y)) stop("Dimensions of X and y don't match.")
+      if(NROW(X)!= NROW(y)) stop("Dimensions of X and y don't match.\n")
     }
   }
   

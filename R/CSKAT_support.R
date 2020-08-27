@@ -1,67 +1,4 @@
 
-
-# KRV test statistic 
-calcKRVstat <- function(K, L) {
-  n = nrow(K) 
-  I.n=diag(1,n)
-  I.1=rep(1,n)
-  H=I.n-I.1%*%t(I.1)/n
-  K=H%*%K%*%H
-  L=H%*%L%*%H
-  A=K/tr(K%*%K)  ## standard-version of K
-  W=L/tr(L%*%L)
-  Fstar=tr(A%*%W)
-  return(Fstar)
-}
-
-# R-squared 
-calcRsquared <- function(K, L) {
-  r1 <- cor(as.numeric(K), as.numeric(L)) 
-  return(r1^2)
-}
-
-# trace of a matrix 
-tr=function(x){return(sum(diag(x))) }
-
-# permutation matrix 
-getPermuteMatrix <- function(perm, N, strata = NULL) {
-  if (length(perm) == 1) {
-    perm <- how(nperm = perm)
-  }
-  if (!missing(strata) && !is.null(strata)) {
-    if (inherits(perm, "how") && is.null(getBlocks(perm))) 
-      setBlocks(perm) <- strata
-  }
-  if (inherits(perm, "how")) 
-    perm <- shuffleSet(N, control = perm)
-  else {
-    if (!is.integer(perm) && !all(perm == round(perm))) 
-      stop("permutation matrix must be strictly integers: use round()")
-  }
-  if (is.null(attr(perm, "control"))) 
-    attr(perm, "control") <- structure(list(within = list(type = "supplied matrix"), 
-                                            nperm = nrow(perm)), class = "how")
-  perm
-}
-
-
-# For binary outcome 
-getHm = function(Q,muQ, varQ, df){
-  Q_corrected= (Q - muQ)*sqrt(2*df)/sqrt(varQ) + df
-  p = 1 - pchisq(Q_corrected ,df = df)
-  p = ifelse(p<0, 0, p)
-  return(p)
-}
-Get_Var_Elements =function(m4,u1,u2){
-  temp1 = u1^2 * u2^2
-  a1    = sum(m4 * temp1)
-  a2    = sum(u1^2) * sum(u2^2) - sum(temp1)
-  a3    = sum(u1*u2)^2 - sum(temp1)
-  return(a1+a2+2*a3)
-}
-
-
-
 # KAT p-value for CSKAT 
 KAT.pval <- function(Q.all, lambda, acc=1e-9,lim=1e6){
   pval = rep(0, length(Q.all))
@@ -72,6 +9,7 @@ KAT.pval <- function(Q.all, lambda, acc=1e-9,lim=1e6){
   }
   return(pval)
 }
+
 saddle = function(x,lambda){
   d = max(lambda)
   lambda = lambda/d
@@ -113,8 +51,9 @@ Liu.pval = function(Q, lambda){
   Q.Norm1 = Q.Norm*sigmaX + muX
   pchisq(Q.Norm1, df = l,ncp=d, lower.tail=FALSE)
 }
+
 Sadd.pval = function(Q.all,lambda){
-  sad = rep(1,length(Q.all))
+  sad = rep(NA, length(Q.all))
   if(sum(Q.all>0)>0){
     sad[Q.all>0] = sapply(Q.all[Q.all>0],saddle,lambda=lambda)
   }
@@ -126,7 +65,6 @@ Sadd.pval = function(Q.all,lambda){
 }
 
 
-# CSKAT 
 sqrt.inv <- function (V2) {
   eig.obj <- eigen(V2, symmetric = TRUE)
   vectors <- eig.obj$vectors
@@ -138,10 +76,4 @@ sqrt.inv <- function (V2) {
   Vi <- vectors  %*% temp
   return(list(Vi=Vi, rank=length(values)))
 }
-
-
-
-
-
-
 

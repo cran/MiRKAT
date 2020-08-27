@@ -11,6 +11,7 @@ MiRKATS(
   Ks,
   beta = NULL,
   perm = FALSE,
+  omnibus = "permutation",
   nperm = 999,
   returnKRV = FALSE,
   returnR2 = FALSE
@@ -32,7 +33,10 @@ calculate coefficients (default = NULL).}
 \item{perm}{Logical, indicating whether permutation should be used instead of analytic p-value calculation (default=FALSE). 
 Not recommended for sample sizes of 100 or more.}
 
-\item{nperm}{Integer, number of permutations used to calculate p-value if perm==TRUE (default=1000)}
+\item{omnibus}{A string equal to either "Cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
+to use the Cauchy combination test or residual permutation to generate the omnibus p-value.}
+
+\item{nperm}{Integer, number of permutations used to calculate p-value if perm==TRUE (default=1000) and to calculate omnibus p-value if omnibus=="permutation".}
 
 \item{returnKRV}{A logical indicating whether to return the KRV statistic. Defaults to FALSE.}
 

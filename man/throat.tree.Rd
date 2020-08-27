@@ -4,7 +4,9 @@
 \name{throat.tree}
 \alias{throat.tree}
 \title{Simulated rooted phylogenetic tree}
-\format{Phylogenetic tree with 856 tips and 855 internal nodes}
+\format{
+Phylogenetic tree with 856 tips and 855 internal nodes
+}
 \usage{
 data(throat.tree)
 }

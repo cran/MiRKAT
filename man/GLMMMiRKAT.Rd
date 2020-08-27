@@ -14,6 +14,7 @@ GLMMMiRKAT(
   method = "perm",
   formula.H0 = NULL,
   slope = FALSE,
+  omnibus = "perm",
   nperm = 5000
 )
 }
@@ -43,6 +44,9 @@ mixed effects. Needed only if model = "gaussian" and method = "davies. Defaults 
 \item{slope}{An indicator to include random slopes in the model (slope = TRUE) or not (slope = FALSE). 'slope = FALSE' is for 
 the random intercept model. 'slope = TRUE' is for the random slope model. For the random slope model (slope = TRUE), 'time.pt' 
 is required.}
+
+\item{omnibus}{A string equal to either "Cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
+to use the Cauchy combination test or residual permutation to generate the omnibus p-value.}
 
 \item{nperm}{The number of permutations used to calculate the p-values and omnibus p-value. Defaults to 5000.}
 }

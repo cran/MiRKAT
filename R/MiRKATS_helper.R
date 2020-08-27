@@ -1,5 +1,5 @@
 # Function to calculate a single MiRKATS p-value 
-inner.MiRKATS <- function(obstime, delta, covar, K, beta=NULL, perm=FALSE, nperm=999){
+inner.MiRKATS <- function(obstime, delta, covar, K, beta=NULL, perm=FALSE, nperm=999, wgt=NULL){
     # sort in order of observed times
     ord = order(obstime)
     n = length(obstime)
@@ -13,7 +13,7 @@ inner.MiRKATS <- function(obstime, delta, covar, K, beta=NULL, perm=FALSE, nperm
     fdupcts <- unlist(sapply( table(ftimes), FUN=function(x) c(0:(x-1)) ))
     
     # if no covariates or no coefficients provided
-    if(!is.null(X) & is.null(beta)){ beta <- coxph(Surv(U,D) ~ ., data=data.frame(X), ties="efron")$coef }
+    if(!is.null(X) & is.null(beta)){ beta <- coxph(Surv(U,D) ~ ., data=data.frame(X), weights=wgt, ties="efron")$coef }
     if(is.null(X)){ eta <- rep(0,n) } else{ eta = X %*% beta }
     V <- as.vector(exp(eta))
     
@@ -48,7 +48,16 @@ inner.MiRKATS <- function(obstime, delta, covar, K, beta=NULL, perm=FALSE, nperm
       if(is.null(X)){ P0 <- V.mat } else { P0 <- V.mat - V.mat%*%X %*% solve(t(X)%*%V.mat%*%X) %*% t(X)%*%V.mat }
       eig.P0 <- eigen(P0)
       eig.P0.val <- eig.P0$values
-      eig.P0.val[eig.P0.val < 1e-12] <- 0   # round eigenvalues too small to take the sqrt; enforce psd
+      
+      # correct computationally zero eigenvalues (complex or rational) 
+      # round eigenvalues too small to take the sqrt; enforce psd
+      if (any(Im(eig.P0.val) != 0)) {
+        mi = which.max(abs(Im(eig.P0.val)))
+        message(paste("Note: Projection matrix has complex eigenvalues. Largest complex component is ", 
+                      signif(Im(eig.P0.val)[mi], digits = 3), sep = ""))
+      }
+      eig.P0.val = Re(eig.P0.val)
+      eig.P0.val[eig.P0.val < 1e-12] <- 0  
       sqrt.P0 <- eig.P0$vectors %*% diag(sqrt(eig.P0.val)) %*% t(eig.P0$vectors)
       
       # Small sample correction

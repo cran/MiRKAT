@@ -63,3 +63,5 @@ inner.CSKAT <- function (formula.H0, data = NULL, K) {
   return(list(p.value = p.value, Q.adj = q, V = V2, resid = res))
 }
 
+
+

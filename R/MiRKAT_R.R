@@ -15,15 +15,17 @@
 #'@param y A numeric vector of the a continuous or dichotomous outcome variable.
 #'@param X A numerical matrix or data frame, containing additional covariates that you want to adjust for Mustn't be NULL
 #'@param Ks list of n by n kernel matrices (or a single n by n kernel matrix), where n is the sample size. It can be constructed from 
-#'microbiome data through distance metric or other approaches, such as linear kernels or Gaussian kernels.
-#' @param returnKRV A logical indicating whether to return the KRV statistic. Defaults to FALSE. 
-#' @param returnR2 A logical indicating whether to return the R-squared coefficient. Defaults to FALSE.  
+#' microbiome data through distance metric or other approaches, such as linear kernels or Gaussian kernels.
+#'@param omnibus A string equal to either "Cauchy" or "kernel_om" (or nonambiguous abbreviations thereof), specifying whether 
+#'  to use the Cauchy combination test or an omnibus kernel to generate the omnibus p-value. 
+#'@param returnKRV A logical indicating whether to return the KRV statistic. Defaults to FALSE. 
+#'@param returnR2 A logical indicating whether to return the R-squared coefficient. Defaults to FALSE.  
 #'@return
 #'Returns p-values for each individual kernel matrix, an omnibus p-value if multiple kernels were provided, and measures of effect size KRV and R2. 
 #'    \item{p_values}{labeled individual p-values for each kernel}
 #'    \item{omnibus_p}{omnibus p_value, calculated as for the KRV test}
-#'     \item{KRV}{A vector of kernel RV statistics (a measure of effect size), one for each candidate kernel matrix. Only returned if returnKRV = TRUE}
-#'     \item{R2}{A vector of R-squared statistics, one for each candidate kernel matrix. Only returned if returnR2 = TRUE}
+#'    \item{KRV}{A vector of kernel RV statistics (a measure of effect size), one for each candidate kernel matrix. Only returned if returnKRV = TRUE}
+#'    \item{R2}{A vector of R-squared statistics, one for each candidate kernel matrix. Only returned if returnR2 = TRUE}
 #'     
 #'@author
 #'Weijia Fu
@@ -54,14 +56,21 @@
 #'
 #'@export
 #'
-MiRKAT.R <- function(y, X, Ks, returnKRV = FALSE, returnR2 = FALSE){
+MiRKAT.R <- function(y, X, Ks, omnibus = "kernel_om", returnKRV = FALSE, returnR2 = FALSE){
+  
+  om <- substring(tolower(omnibus), 1, 1)
+  
   if (is.null(X)) {
     stop("Please provide a covariate matrix X. To fit an intercept-only model, use MiRKAT instead of MiRKAT-R, as no robust 
-         intercept-only model is available.") 
+         intercept-only model is available. \n") 
   } 
   
+  if (is.matrix(Ks)) {
+    Ks = list(Ks)
+  }
+  
   if (returnKRV | returnR2) {
-    warning("Note that R2 and KRV are calculated using an intercept-only model, and therefore will be identical between MiRKAT-R and MiRKAT.")
+    warning("Note that R2 and KRV are calculated using an intercept-only model, and therefore will be identical between MiRKAT-R and MiRKAT. \n")
     reskrv = scale(resid(lm(y ~ 1)))
     L = reskrv %*% t(reskrv)
     if (returnKRV) {
@@ -81,13 +90,33 @@ MiRKAT.R <- function(y, X, Ks, returnKRV = FALSE, returnR2 = FALSE){
 
   mod <- rlm(y ~ X)
   res <- resid(mod)
-  scalep<- mod$s
+  scalep <- mod$s
   k <- 1.345
   res0 <- res/scalep
   u <- ifelse(abs(res0)>k, k*res0/abs(res0), res0)
   U <- u %*% t(u)
-  sig <- KRV(kernels.otu=Ks, kernel.y=U)
+  sig <- KRV(kernels.otu=Ks, kernel.y=U, omnibus = omnibus)
   
-  return(list(p_values = sig$p_values, omnibus_p = sig$omnibus_p, KRV = KRVs, R2 = R2))
+  if (length(Ks) == 1) {
+    if (!returnKRV & !returnR2) {
+      return(list(p_values = sig$p_values))
+    } else if (!returnKRV & returnR2) {
+      return(list(p_values = sig$p_values, R2 = R2))
+    } else if (returnKRV & !returnR2) {
+      return(list(p_values = sig$p_values, KRV = KRVs))
+    } else {
+      return(list(p_values = sig$p_values, KRV = KRVs, R2 = R2))
+    }
+  }
+  
+  if (!returnKRV & !returnR2) {
+    return(list(p_values = sig$p_values, omnibus_p = sig$omnibus_p))
+  } else if (!returnKRV & returnR2) {
+    return(list(p_values = sig$p_values, omnibus_p = sig$omnibus_p, R2 = R2))
+  } else if (returnKRV & !returnR2) {
+    return(list(p_values = sig$p_values, omnibus_p = sig$omnibus_p, KRV = KRVs))
+  } else {
+    return(list(p_values = sig$p_values, omnibus_p = sig$omnibus_p, KRV = KRVs, R2 = R2))
+  }
 }
 

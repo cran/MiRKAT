@@ -10,6 +10,7 @@ MiRKAT(
   Ks,
   out_type = "C",
   method = "davies",
+  omnibus = "permutation",
   nperm = 999,
   returnKRV = FALSE,
   returnR2 = FALSE
@@ -30,6 +31,9 @@ from microbiome data through distance metric or other approaches, such as linear
 inverting the characteristic function of the mixture chisq. We adopt an exact variance component tests because most of the studies
 concerning microbiome compositions have modest sample size. "moment" represents an approximation method that matches the first
 two moments. "permutation" represents a permutation approach for p-value calculation. Defaults to "davies".}
+
+\item{omnibus}{A string equal to either "Cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
+to use the Cauchy combination test or residual permutation to generate the omnibus p-value.}
 
 \item{nperm}{The number of permutations if method = "permutation" or when multiple kernels are considered. If method = "davies" or 
 "moment", nperm is ignored. Defaults to 999.}

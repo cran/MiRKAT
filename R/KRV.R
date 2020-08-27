@@ -23,6 +23,8 @@
 #' @param kernel.y Either a numerical n by n kernel matrix for phenotypes or a method to compute the kernel of phenotype. Methods are "Gaussian" or "linear". 
 #' A Gaussian kernel (kernel.y="Gaussian") can capture the general relationship between microbiome and phenotypes; a linear kernel (kernel.y="linear") 
 #' may be preferred if the underlying relationship is close to linear. 
+#' @param omnibus A string equal to either "Cauchy" or "kernel_om" (or nonambiguous abbreviations thereof), specifying whether 
+#'  to use the Cauchy combination test or an omnibus kernel to generate the omnibus p-value. 
 #' @param returnKRV A logical indicating whether to return the KRV statistic. Defaults to FALSE. 
 #' @param returnR2 A logical indicating whether to return the R-squared coefficient. Defaults to FALSE.  
 #' 
@@ -84,16 +86,12 @@
 #'
 #'
 #'@export 
-KRV <- function(y = NULL, X = NULL, kernels.otu, kernel.y, returnKRV = FALSE, returnR2 = FALSE){
+KRV <- function(y = NULL, X = NULL, kernels.otu, kernel.y, omnibus = "kernel_om", returnKRV = FALSE, returnR2 = FALSE){
+  
+  om <- substring(tolower(omnibus), 1, 1)
   
   if(!is.list(kernels.otu)){
     kernels.otu <- list(kernels.otu)
-  }
-  if(!length(kernels.otu)==1){
-    if(is.null(names(kernels.otu))){
-      message("The p-values will not be labeled according to their corresponding kernel matrices. For labeled p-values,
-please form your list of kernels for input via 'list(name=K1, name=K2...)' to label the p-values with the corresponding names.")
-    }
   }
   
   pvals <- c()
@@ -110,22 +108,48 @@ please form your list of kernels for input via 'list(name=K1, name=K2...)' to la
   
   # Naming the p-values with the Kernel matrix names from Ks
   kernel.names <- names(kernels.otu)
-  names(pvals) <- kernel.names
+  names(pvals) <- kernel.names 
   if (returnKRV) { names(KRVs) <- kernel.names }
   if (returnR2) { names(R2) <- kernel.names }
   
   #Omnibus Test
   if (length(kernels.otu) > 1) {
-    K.om <- matrix(0, nrow = nrow(kernels.otu[[1]]), ncol = ncol(kernels.otu[[1]]))
-    for(i in 1:length(kernels.otu)){
-      K.om = K.om + kernels.otu[[i]]/tr(kernels.otu[[i]])
+    if (om == "k") {
+      K.om <- matrix(0, nrow = nrow(kernels.otu[[1]]), ncol = ncol(kernels.otu[[1]]))
+      for(i in 1:length(kernels.otu)){
+        K.om = K.om + kernels.otu[[i]]/tr(kernels.otu[[i]])
+      }
+      omnibus_p <- as.numeric(inner.KRV(y = y, X = X, kernel.otu = K.om, kernel.y = kernel.y)$pv)
+    } else if (om == "c") {
+      cauchy.t <- sum(tan((0.5 - pvals)*pi))/length(pvals)
+      omnibus_p <- 1 - pcauchy(cauchy.t)
+    } else {
+      stop("I don't know that omnibus option. Please choose 'kernel_om' or 'Cauchy'.")
     }
     
-    omnibus_p <- as.numeric(inner.KRV(y = y, X = X, kernel.otu = K.om, kernel.y = kernel.y)$pv)
-    return(list(p_values = pvals, omnibus_p = omnibus_p, KRV = KRVs, R2 = R2))
+    ## Return for multiple kernels
+    if (is.null(KRVs) & is.null(R2)) {
+      return(list(p_values = pvals, omnibus_p = omnibus_p))
+    } else if (is.null(KRVs) & !is.null(R2)) {
+      return(list(p_values = pvals, omnibus_p = omnibus_p, R2 = R2))
+    } else if (!is.null(KRVs) & is.null(R2)) {
+      return(list(p_values = pvals, omnibus_p = omnibus_p, KRV = KRVs))
+    } else {
+      return(list(p_values = pvals, omnibus_p = omnibus_p, KRV = KRVs, R2 = R2))    
+    }
   }
+
   
-  return(list(p_values = pvals, KRV = KRVs, R2 = R2))
+  ## Return for single kernels
+  if (is.null(KRVs) & is.null(R2)) {
+    return(list(p_values = pvals))
+  } else if (is.null(KRVs) & !is.null(R2)) {
+    return(list(p_values = pvals, R2 = R2))
+  } else if (!is.null(KRVs) & is.null(R2)) {
+    return(list(p_values = pvals, KRV = KRVs))
+  } else {
+    return(list(p_values = pvals, KRV = KRVs, R2 = R2))    
+  }
   
 }
 

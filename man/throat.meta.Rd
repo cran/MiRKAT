@@ -4,7 +4,8 @@
 \name{throat.meta}
 \alias{throat.meta}
 \title{Simulated metadata for microbiome regression-based analysis}
-\format{A data frame with 59 rows and 16 columns, rows being participants and columns being different covariates to possibly be
+\format{
+A data frame with 59 rows and 16 columns, rows being participants and columns being different covariates to possibly be
 accounted for in any utilized linear models.
 
 throat.meta is part of a microbiome data set for studying the effect of smoking on the upper respiratory tract microbiome. This data set 
@@ -36,7 +37,8 @@ years the patient has been smoking. If patient has never smoked, their value is 
 \item{TimeFromLastCig}{Minutes since the patient's last cigarette}
 \item{TimeFromLastMeal}{Minutes since the patient's last meal}
 \item{Description}{See Charleston paper and other sources}
-}}
+}
+}
 \usage{
 data(throat.meta)
 }

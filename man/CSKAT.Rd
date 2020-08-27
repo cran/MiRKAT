@@ -4,7 +4,7 @@
 \alias{CSKAT}
 \title{Small-sample SKAT for correlated (continuous) data ('c' stands for 'correlated')}
 \usage{
-CSKAT(formula.H0, data = NULL, Ks, nperm = 999)
+CSKAT(formula.H0, data = NULL, Ks, omnibus = "permutation", nperm = 999)
 }
 \arguments{
 \item{formula.H0}{A two-sided linear formula object describing both the fixed-effects and random-effects part of
@@ -13,6 +13,9 @@ the model under the null, use the same syntax as the "lmer" in "lme4" package}
 \item{data}{An optional data frame containing the variables named in formula. Default: NULL.}
 
 \item{Ks}{A kernel matrix or list of kernels, quantifying the similarities between samples.}
+
+\item{omnibus}{A string equal to either "Cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
+to use the Cauchy combination test or residual permutation to generate the omnibus p-value.}
 
 \item{nperm}{Number of permutations for calculating the omnibus p-value. Ignored unless Ks is a list of candidate kernels.}
 }

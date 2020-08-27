@@ -117,5 +117,13 @@ MMiRKAT <- function(Y, X = NULL, Ks, returnKRV = FALSE, returnR2 = FALSE){
   names_Ks <- names(Ks)
   named_pvals <- setNames(pvals, names_Ks)
   
-  return(list(p_values = named_pvals, KRV = KRVs, R2 = R2))
+  if (!returnKRV & !returnR2) {
+    return(list(p_values = named_pvals))
+  } else if (!returnKRV & returnR2) {
+    return(list(p_values = named_pvals, R2 = R2)) 
+  } else if (returnKRV & !returnR2) {
+    return(list(p_values = named_pvals, KRV = KRVs))
+  } else {
+    return(list(p_values = named_pvals, KRV = KRVs, R2 = R2))
+  }
 }

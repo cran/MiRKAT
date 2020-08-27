@@ -4,7 +4,9 @@
 \name{throat.otu.tab}
 \alias{throat.otu.tab}
 \title{Simulated OTU data for microbiome regression analysis}
-\format{60 rows and 856 columns, where rows are patients and columns are OTUs}
+\format{
+60 rows and 856 columns, where rows are patients and columns are OTUs
+}
 \usage{
 data(throat.otu.tab)
 }

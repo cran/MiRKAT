@@ -19,9 +19,9 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(MiRKAT, quietly = TRUE)
 library(GUniFrac, quietly = TRUE)
 library(vegan, quietly = TRUE)
-library(cluster); library(CompQuadForm); library(dirmult); library(lme4); library(MASS)
-library(Matrix); library(survival); library(permute); library(propr)
-library(tidyverse); library(kableExtra)
+library(cluster); library(CompQuadForm); library(dirmult); library(lme4)
+library(MASS); library(Matrix); library(survival); library(permute)
+library(propr); library(kableExtra)
 ``` 
 
 ## Overview
@@ -133,13 +133,18 @@ Depending on which of these characteristics are expected to be present in a part
 
 ### Testing Using Multiple Kernels
 
-We provide an omnibus test that takes into account multiple kernels simultaneously. The method is robust in the sense that it has substantial power gain compared to when an improper kernel is used, and has little power loss compared to when the best kernel is used.
+We provide an omnibus test that takes into account multiple kernels simultaneously. The method is robust in the sense that it has substantial power gain compared to when an improper kernel is used, and has little power loss compared to when the best kernel is used. Two options for omnibus testing are provided: residual permutation and the Cauchy combination test (weighting all kernels equally).  
   
 
 ```{r}
 Ks = list(K.weighted = K.weighted, K.unweighted = K.unweighted, K.BC = K.BC)
 MiRKAT(y = Smoker, Ks = Ks, X = covar, out_type = "D", 
-       method = "davies", returnKRV = TRUE, returnR2 = TRUE)
+       method = "davies", omnibus = "permutation", 
+       returnKRV = TRUE, returnR2 = TRUE)
+
+MiRKAT(y = Smoker, Ks = Ks, X = covar, out_type = "D", 
+       method = "davies", omnibus = "Cauchy", 
+       returnKRV = FALSE, returnR2 = FALSE)
 ```
   
 ### Testing with a Continuous Outcome Variable
@@ -149,7 +154,7 @@ The only difference between using a continuous and dichotomous outcome variable 
 ```{r}
 y <- rnorm(nrow(K.weighted))
 MiRKAT(y = y, Ks = Ks, X = covar, out_type = "C", nperm = 999, 
-       method = "davies", returnKRV = TRUE, returnR2 = TRUE)
+       method = "davies", omnibus = "Cauchy", returnKRV = TRUE, returnR2 = TRUE)
 ```
 
 This function outputs p-values for association using each single kernel and an omnibus p-value considering all kernels. The omnibus p-value is obtained through residual permutation where the minimum p-values from each of the individual tests are used as test statistics. As before, the "method" option only indicates the method that is used for generating individual kernel p-values. 
@@ -176,18 +181,18 @@ The p-value for the test may be generated using permutation or Davies' exact met
 ```{r}
 # Davies' exact method 
 MiRKATS(obstime = ObsTime, delta = Delta, X = cbind(Smoker, Male, anti), Ks = Ks, 
-        perm = F, returnKRV = T, returnR2 = T)
+        perm = F, omnibus = "Cauchy", returnKRV = T, returnR2 = T)
 ```
 
-Using "perm = T" indicates that a permutation p-value should be calculated. Overall, permutation is recommended when the sample size is small, as Davies' method may be slightly anti-conservative with very small sample sizes. MiRKAT-S will generate a warning when permutation is not used for sample sizes $n \leq 50$. "nperm" indicates the number of permutations to perform to generate the p-value (default = 1000)
+Using "perm = T" indicates that a permutation p-value should be calculated for each kernel-specific test. Overall, permutation is recommended when the sample size is small, as Davies' method may be slightly anti-conservative with very small sample sizes. MiRKAT-S will generate a warning when permutation is not used for sample sizes $n \leq 50$. "nperm" indicates the number of permutations to perform to generate the p-value (default = 1000). 
 
 ```{r}
 # Permutation 
 MiRKATS(obstime = ObsTime, delta = Delta, X = cbind(Smoker, Male, anti), Ks = Ks, 
-        perm = T, returnKRV = T, returnR2 = T)
+        perm = T, omnibus = "Cauchy", returnKRV = T, returnR2 = T)
 ```
 
-The omnibus p-value is similar to that of MiRKAT, in which residual permutation is used to create a null distribution of p-values, and the minimum p-value from the original MiRKAT-S analysis is tested against this distribution as the test statistic of the omnibus test. The omnibus test is described further at https://github.com/hk1785/OMiSA (Koh 2018, DOI: https://doi.org/10.1186/s12864-018-4599-8). 
+As above, the omnibus p-value may be generated either using residual permutation to create a null distribution of minimum p-values, and the minimum p-value from the original MiRKAT-S analysis is tested against this distribution as the test statistic of the omnibus test, or using the Cauchy combination test. The permutation-based omnibus test is described further at https://github.com/hk1785/OMiSA (Koh 2018, DOI: https://doi.org/10.1186/s12864-018-4599-8). 
 
   
 ## MMiRKAT: Multivariate Continuous Outcome
@@ -211,6 +216,8 @@ MMiRKAT(Y = Y, X = cbind(Male, anti), Ks = Ks,
 KRV (kernel RV coefficient) is designed to evaluate the association between microbiome composition and a structured, potentially high-dimensional phenotype, such as gene expression of a set of genes which are functionally related. The KRV statistic can capture nonlinear associations and complex relationships within the individual data types and between the complex multivariate phenotype and microbiome composition by measuring general dependency. 
 
 Two kernels are involved in KRV statistics: one kernel for microbiome composition, which can be obtained by transforming the distance metrics as in the previous sections, and one kernel capturing similarities in the phenotypes. As an alternative, KRV can also take as input a kernel matrix for microbiome composition, a multivariate phenotype y, and a set of additional covariates X. In this case, a multivariate regression is carried out, and then the residuals of this regression are subsequently used to construct a Gaussian or linear kernel matrix.
+
+An omnibus test has also been implemented for the KRV function.  This omnibus test is different from the other omnibus tests in the package, as it creates an "omnibus kernel matrix" and then performs the KRV analysis on that omnibus kernel (option: omnibus = "kernel_om"). The omnibus kernel matrix is constructed via the second formulation in Zhan et al (2017), an unsupervised weighted combination of kernels that the authors found to have the best performance across a range of simulation settings. Specifically, the omnibus kernel is defined as $$K_{om} = \sum_{i=1}^m \frac{K_i}{tr(K_i)}.$$ The p-value from this single omnibus kernel is returned as the omnibus p-value for KRV. Alternatively, the Cauchy combination test may be used (option: omnibus = "Cauchy"). 
   
 ### Create the Kernel Matrix of Simulated Data
 
@@ -226,6 +233,7 @@ G = mvrnorm(n, rep(0, 2*n), Va)
 ```{r}
 lin.K.y = G %*% t(G)
 KRV(kernels.otu = Ks, kernel.y = lin.K.y, 
+    omnibus = "kernel_om", 
     returnKRV = TRUE, returnR2 = TRUE)
 ```
 
@@ -235,7 +243,7 @@ KRV(kernels.otu = Ks, kernel.y = lin.K.y,
 KRV(y = G, X = cbind(Male, anti), kernels.otu = Ks, kernel.y = "linear")
 ```
 
-An omnibus test has also been implemented for the KRV function.  This omnibus test is different from the other omnibus tests in the package, as it creates an "omnibus kernel matrix" and then performs the KRV analysis on that omnibus kernel. The omnibus kernel matrix is constructed via the second formulation in Zhan et al (2017), an unsupervised weighted combination of kernels that the authors found to have the best performance across a range of simulation settings. Specifically, the omnibus kernel is defined as $$K_{om} = \sum_{i=1}^m \frac{K_i}{tr(K_i)}.$$ The p-value from this single omnibus kernel is returned as the omnibus p-value for KRV.
+
 
 ## Robust MiRKAT
 

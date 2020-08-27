@@ -23,7 +23,9 @@
 #' calculate coefficients (default = NULL).
 #' @param perm Logical, indicating whether permutation should be used instead of analytic p-value calculation (default=FALSE). 
 #' Not recommended for sample sizes of 100 or more.
-#' @param nperm Integer, number of permutations used to calculate p-value if perm==TRUE (default=1000)
+#' @param omnibus A string equal to either "Cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
+#'  to use the Cauchy combination test or residual permutation to generate the omnibus p-value. 
+#' @param nperm Integer, number of permutations used to calculate p-value if perm==TRUE (default=1000) and to calculate omnibus p-value if omnibus=="permutation". 
 #' @param returnKRV A logical indicating whether to return the KRV statistic. Defaults to FALSE. 
 #' @param returnR2 A logical indicating whether to return the R-squared coefficient. Defaults to FALSE.  
 #'
@@ -83,8 +85,9 @@
 #'
 #'
 #' @export
-MiRKATS <- function(obstime, delta, X = NULL, Ks,  beta = NULL, perm=FALSE, nperm=999, returnKRV = FALSE, returnR2 = FALSE){
+MiRKATS <- function(obstime, delta, X = NULL, Ks,  beta = NULL, perm=FALSE, omnibus="permutation", nperm=999, returnKRV = FALSE, returnR2 = FALSE){
   
+  om <- substring(tolower(omnibus), 1, 1)
   
   if(!is.list(Ks)){
     if (!is.matrix(Ks)) stop("Please convert your kernel into a matrix.")
@@ -127,52 +130,78 @@ MiRKATS <- function(obstime, delta, X = NULL, Ks,  beta = NULL, perm=FALSE, nper
   # Calculate individual p-values
   pvals <- c()
   for(i in 1:length(Ks)){
-    inner_output <- inner.MiRKATS(obstime=obstime, delta=delta, covar = X, K = Ks[[i]], beta=beta, perm=perm, nperm=nperm)
-    pvals[i] <- inner_output
+    pvals[i] <- inner.MiRKATS(obstime=obstime, delta=delta, covar = X, K = Ks[[i]], beta=beta, perm=perm, nperm=nperm)
   }
-  
-  # Naming the individual p-values with the names of the corresponding kernel matrix names
-  names_Ks <- names(Ks)
-  named_pvals <- setNames(pvals, names_Ks)
+  names(pvals) <- names(Ks)
   
     
   if(length(Ks) > 1){
-    ######################################
-    # Optimal-MiRKATS omnibus test begins
-    ######################################
     
-    r <- coxph(Surv(obstime, delta) ~ ., data=as.data.frame(X))$residuals 
-    r.s <- list() # becomes a list of permuted vectors of residuals
-    for (j in 1:nperm) {
-      r.s[[j]] <- r[shuffle(length(r))]
-    }
-    
-    T0s.mirkats <- list()
-    for (j in 1:length(Ks)) {
-      T0s.mirkats.inv <- rep(NA, nperm)
-      for (k in 1:nperm) {
-        T0s.mirkats.inv[k] <- t(r.s[[k]])%*%Ks[[j]]%*%r.s[[k]]
+    if (om == "p") {
+      ######################################
+      # Optimal-MiRKATS omnibus test begins
+      ######################################
+      
+      if (is.null(X)) {X <- rep(1, length(obstime))}
+      r <- coxph(Surv(obstime, delta) ~ ., data=as.data.frame(X))$residuals 
+      r.s <- list() # becomes a list of permuted vectors of residuals
+      for (j in 1:nperm) {
+        r.s[[j]] <- r[shuffle(length(r))]
       }
-      T0s.mirkats[[j]] <- T0s.mirkats.inv
-    }
-    
-    Q.mirkats <- min(pvals) # The test statistic for OMiRKATS, Q.mirkats, is the minimum of the p-values from MiRKATS
-    Q0.mirkats <- rep(NA, nperm) 
-    for (l in 1:nperm) { # Creating a list of omnibus test statistics (minimum p-values from null distributions of test statistics)
-      Q0.mirkats.s.n <- list()
-      for (m in 1:length(Ks)) {
-        Q0.mirkats.s.n[[m]] <- T0s.mirkats[[m]][-l]
+      
+      T0s.mirkats <- list()
+      for (j in 1:length(Ks)) {
+        T0s.mirkats.inv <- rep(NA, nperm)
+        for (k in 1:nperm) {
+          T0s.mirkats.inv[k] <- t(r.s[[k]])%*%Ks[[j]]%*%r.s[[k]]
+        }
+        T0s.mirkats[[j]] <- T0s.mirkats.inv
       }
-      a.Qs.mirkats <- unlist(lapply(Ks,function(x) return(t(r.s[[l]])%*%x%*%r.s[[l]])))
-      a.pvs <- unlist(mapply(function(x,y)length(which(abs(x) >= abs(y)))/(nperm-1),Q0.mirkats.s.n,a.Qs.mirkats))
-      Q0.mirkats[l] <- min(a.pvs)
+      
+      Q.mirkats <- min(pvals) # The test statistic for OMiRKATS, Q.mirkats, is the minimum of the p-values from MiRKATS
+      Q0.mirkats <- rep(NA, nperm) 
+      for (l in 1:nperm) { # Creating a list of omnibus test statistics (minimum p-values from null distributions of test statistics)
+        Q0.mirkats.s.n <- list()
+        for (m in 1:length(Ks)) {
+          Q0.mirkats.s.n[[m]] <- T0s.mirkats[[m]][-l]
+        }
+        a.Qs.mirkats <- unlist(lapply(Ks,function(x) return(t(r.s[[l]])%*%x%*%r.s[[l]])))
+        a.pvs <- unlist(mapply(function(x,y)length(which(abs(x) >= abs(y)))/(nperm-1),Q0.mirkats.s.n,a.Qs.mirkats))
+        Q0.mirkats[l] <- min(a.pvs)
+      } 
+      p.omirkats <- length(which(Q0.mirkats <= Q.mirkats))/nperm # The omnibus p-value
+      
+    } else if (om == "c") {
+      cauchy.t <- sum(tan((0.5 - pvals)*pi))/length(pvals)
+      p.omirkats <- 1 - pcauchy(cauchy.t)
+    } else {
+      stop("I don't know that omnibus option. Please choose 'permutation' or 'Cauchy'.")
     }
     
-    p.omirkats <- length(which(Q0.mirkats <= Q.mirkats))/nperm # The omnibus p-value
     
-  return(list(p_values=named_pvals, omnibus_p=p.omirkats, KRV = KRVs, R2 = R2))
+    ## return if multiple kernels 
+    if (is.null(KRVs) & is.null(R2)) {
+      return(list(p_values = pvals, omnibus_p = p.omirkats))
+    } else if (is.null(KRVs) & !is.null(R2)) {
+      return(list(p_values = pvals, omnibus_p = p.omirkats, R2 = R2))
+    } else if (!is.null(KRVs) & is.null(R2)) {
+      return(list(p_values = pvals, omnibus_p = p.omirkats, KRV = KRVs))
+    } else {
+      return(list(p_values = pvals, omnibus_p = p.omirkats, KRV = KRVs, R2 = R2))    
+    }
+
+  }
+
+  ## return if only one kernel 
+  if (is.null(KRVs) & is.null(R2)) {
+    return(list(p_values = pvals))
+  } else if (is.null(KRVs) & !is.null(R2)) {
+    return(list(p_values = pvals, R2 = R2))
+  } else if (!is.null(KRVs) & is.null(R2)) {
+    return(list(p_values = pvals, KRV = KRVs))
+  } else {
+    return(list(p_values = pvals, KRV = KRVs, R2 = R2))    
   }
   
-  return(list(p_values=named_pvals, KRV = KRVs, R2 = R2))
 }
 

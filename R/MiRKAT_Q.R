@@ -10,9 +10,11 @@
 #'@param y A numeric vector of the a continuous or dichotomous outcome variable.
 #'@param X A numerical matrix or data frame, containing additional covariates that you want to adjust for. Mustn't be NULL.
 #'@param Ks A list of n by n kernel matrices (or a single n by n kernel matrix), where n is the sample size. If you have distance metric from metagenomic data, each kernel can 
-#'be constructed through function D2K. Each kernel can also be constructed through other mathematical approaches, such as linear or Gaussian kernels. 
-#' @param returnKRV A logical indicating whether to return the KRV statistic. Defaults to FALSE. 
-#' @param returnR2 A logical indicating whether to return the R-squared coefficient. Defaults to FALSE.  
+#' be constructed through function D2K. Each kernel can also be constructed through other mathematical approaches, such as linear or Gaussian kernels.
+#'@param omnibus A string equal to either "Cauchy" or "kernel_om" (or nonambiguous abbreviations thereof), specifying whether 
+#'  to use the Cauchy combination test or an omnibus kernel to generate the omnibus p-value. 
+#'@param returnKRV A logical indicating whether to return the KRV statistic. Defaults to FALSE. 
+#'@param returnR2 A logical indicating whether to return the R-squared coefficient. Defaults to FALSE.  
 #' 
 #'@return
 #'Returns p-values for each individual kernel matrix, an omnibus p-value if multiple kernels were provided, and measures of effect size KRV and R2. 
@@ -49,14 +51,21 @@
 #'MiRKAT.Q(y, X = covar, Ks = Ks)
 #'
 #'@export
-MiRKAT.Q <-function(y, X, Ks, returnKRV = FALSE, returnR2 = FALSE){
+MiRKAT.Q <-function(y, X, Ks, omnibus = "kernel_om", returnKRV = FALSE, returnR2 = FALSE){
+  
+  om <- substring(tolower(omnibus), 1, 1)
+  
   if (is.null(X)) {
     stop("Please provide a covariate matrix X to use robust MiRKAT. To fit an intercept-only model, use MiRKAT instead of MiRKAT-R, 
-as no robust intercept-only model is available.") 
+as no robust intercept-only model is available. \n") 
+  }
+  
+  if (is.matrix(Ks)) {
+    Ks = list(Ks)
   }
   
   if (returnKRV | returnR2) {
-    warning("Note that R2 and KRV are calculated using an intercept-only model, and therefore will be identical between MiRKAT-Q and MiRKAT.")
+    warning("Note that R2 and KRV are calculated using an intercept-only model, and therefore will be identical between MiRKAT-Q and MiRKAT \n.")
     reskrv = scale(resid(lm(y ~ 1)))
     L = reskrv %*% t(reskrv)
     if (returnKRV) {
@@ -78,9 +87,29 @@ as no robust intercept-only model is available.")
   res <- ifelse(res<0, 0.5, -0.5)
   res <- as.matrix(res)
   U <- res %*% t(res)
-  sig <- KRV(kernels.otu = Ks, kernel.y=U)
+  sig <- KRV(kernels.otu = Ks, kernel.y=U, omnibus = omnibus)
   
-  return(list(p_values = sig$p_values, omnibus_p = sig$omnibus_p, KRV = KRVs, R2 = R2))
+  
+  if (length(Ks) == 1) {
+    if (!returnKRV & !returnR2) {
+      return(list(p_values = sig$p_values))
+    } else if (!returnKRV & returnR2) {
+      return(list(p_values = sig$p_values, R2 = R2))
+    } else if (returnKRV & !returnR2) {
+      return(list(p_values = sig$p_values, KRV = KRVs))
+    } else {
+      return(list(p_values = sig$p_values, KRV = KRVs, R2 = R2))
+    }
+  }
+  if (!returnKRV & !returnR2) {
+    return(list(p_values = sig$p_values, omnibus_p = sig$omnibus_p))
+  } else if (!returnKRV & returnR2) {
+    return(list(p_values = sig$p_values, omnibus_p = sig$omnibus_p, R2 = R2))
+  } else if (returnKRV & !returnR2) {
+    return(list(p_values = sig$p_values, omnibus_p = sig$omnibus_p, KRV = KRVs))
+  } else {
+    return(list(p_values = sig$p_values, omnibus_p = sig$omnibus_p, KRV = KRVs, R2 = R2))
+  }
 }
 
 

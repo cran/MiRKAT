@@ -5,9 +5,9 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(MiRKAT, quietly = TRUE)
 library(GUniFrac, quietly = TRUE)
 library(vegan, quietly = TRUE)
-library(cluster); library(CompQuadForm); library(dirmult); library(lme4); library(MASS)
-library(Matrix); library(survival); library(permute); library(propr)
-library(tidyverse); library(kableExtra)
+library(cluster); library(CompQuadForm); library(dirmult); library(lme4)
+library(MASS); library(Matrix); library(survival); library(permute)
+library(propr); library(kableExtra)
 
 ## -----------------------------------------------------------------------------
 data("throat.otu.tab")
@@ -54,12 +54,17 @@ kable(mytab, booktabs=TRUE) %>%
 ## -----------------------------------------------------------------------------
 Ks = list(K.weighted = K.weighted, K.unweighted = K.unweighted, K.BC = K.BC)
 MiRKAT(y = Smoker, Ks = Ks, X = covar, out_type = "D", 
-       method = "davies", returnKRV = TRUE, returnR2 = TRUE)
+       method = "davies", omnibus = "permutation", 
+       returnKRV = TRUE, returnR2 = TRUE)
+
+MiRKAT(y = Smoker, Ks = Ks, X = covar, out_type = "D", 
+       method = "davies", omnibus = "Cauchy", 
+       returnKRV = FALSE, returnR2 = FALSE)
 
 ## -----------------------------------------------------------------------------
 y <- rnorm(nrow(K.weighted))
 MiRKAT(y = y, Ks = Ks, X = covar, out_type = "C", nperm = 999, 
-       method = "davies", returnKRV = TRUE, returnR2 = TRUE)
+       method = "davies", omnibus = "Cauchy", returnKRV = TRUE, returnR2 = TRUE)
 
 ## -----------------------------------------------------------------------------
 # Simulate outcomes
@@ -73,12 +78,12 @@ ObsTime <- pmin(SurvTime, CensTime)
 ## -----------------------------------------------------------------------------
 # Davies' exact method 
 MiRKATS(obstime = ObsTime, delta = Delta, X = cbind(Smoker, Male, anti), Ks = Ks, 
-        perm = F, returnKRV = T, returnR2 = T)
+        perm = F, omnibus = "Cauchy", returnKRV = T, returnR2 = T)
 
 ## -----------------------------------------------------------------------------
 # Permutation 
 MiRKATS(obstime = ObsTime, delta = Delta, X = cbind(Smoker, Male, anti), Ks = Ks, 
-        perm = T, returnKRV = T, returnR2 = T)
+        perm = T, omnibus = "Cauchy", returnKRV = T, returnR2 = T)
 
 ## -----------------------------------------------------------------------------
 set.seed(1)
@@ -96,6 +101,7 @@ G = mvrnorm(n, rep(0, 2*n), Va)
 ## -----------------------------------------------------------------------------
 lin.K.y = G %*% t(G)
 KRV(kernels.otu = Ks, kernel.y = lin.K.y, 
+    omnibus = "kernel_om", 
     returnKRV = TRUE, returnR2 = TRUE)
 
 ## -----------------------------------------------------------------------------
