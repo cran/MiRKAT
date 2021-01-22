@@ -8,8 +8,8 @@ MiRKAT_continuous(
   y,
   X = NULL,
   Ks,
-  method = "davies",
-  omnibus = "permutation",
+  method,
+  omnibus,
   nperm = 999,
   returnKRV = FALSE,
   returnR2 = FALSE

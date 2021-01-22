@@ -12,8 +12,6 @@
 #'          
 #' If model="gaussian" and method="davies", CSKAT is called. CSKAT utilizes the same omnibus test as GLMMMiRKAT. See ?CSKAT for more details.
 #' 
-#' formula.H0 is required only if model="gaussian" and method="davies". In all other situations, it may be left NULL. 
-#'          
 #' The "method" argument only determines kernel-specific p-values are generated. When Ks is a list of multiple kernels,
 #' an omnibus p-value is computed via permutation.
 #' 
@@ -26,12 +24,10 @@
 #' unnecessary for the CSKAT call.
 #' @param time.pt A vector of time points for the longitudinal studies. 'time.pt' is not required (i.e., 'time.pt = NULL') 
 #' for the random intercept model. Default is time.pt = NULL. 
-#' @param model A string declaring which model ("gaussian", "binmoial" or "poisson") is to be used; should align with whether a 
+#' @param model A string declaring which model ("gaussian", "binomial" or "poisson") is to be used; should align with whether a 
 #' Gaussian, Binomial, or Poisson trait is being inputted for the y argument.
-#' @param method A string declaring which method ("permu" or "davies) will be used to calculate the p-value. Davies is only 
+#' @param method A string declaring which method ("perm" or "davies) will be used to calculate the p-value. Davies is only 
 #'  available for Gaussian traits. Defaults to "perm". 
-#' @param formula.H0 A two-sided linear formula object under the null, indicating the variables to adjust. Handles both the random and
-#'  mixed effects. Needed only if model = "gaussian" and method = "davies. Defaults to NULL.
 #' @param slope An indicator to include random slopes in the model (slope = TRUE) or not (slope = FALSE). 'slope = FALSE' is for 
 #' the random intercept model. 'slope = TRUE' is for the random slope model. For the random slope model (slope = TRUE), 'time.pt' 
 #' is required.
@@ -82,10 +78,10 @@
 #'
 #' @export
 GLMMMiRKAT <- function(y, X = NULL, Ks, id = NULL, time.pt = NULL, model, method = "perm" , 
-                       formula.H0=NULL, slope = FALSE, omnibus = "perm", nperm = 5000){
-
+                       slope = FALSE, omnibus = "perm", nperm = 5000){
+  
   om <- substring(tolower(omnibus), 1, 1)
-
+  
   if (is.null(time.pt) & slope) {
     stop("time.pt is required for the random slope model")
   }
@@ -94,14 +90,27 @@ GLMMMiRKAT <- function(y, X = NULL, Ks, id = NULL, time.pt = NULL, model, method
   }
   
   if (model == "gaussian" & method =="davies"){  ## Calls CSKAT 
-    if(is.null(formula.H0)) {
-      stop("In order to use the davies method with a gaussian trait, formula.H0 must contain a valid formula object.")
-    } 
+    if (om == "p") {
+      warning("Permutation omnibus test not available with Davies P-values. Defaulting to Cauchy combination test.")
+    }
     y <- scale(y)
-    out <- CSKAT(formula.H0 = formula.H0, data = data.frame(y, X), Ks=Ks, nperm=nperm)
+    if (is.null(X)) {
+      if (!is.null(time.pt) & slope) {
+        fit <- lmer(y ~ (time.pt | id))
+      } else {
+        fit <- lmer(y ~ (1 | id))
+      }
+    } else {  # if X not null 
+      if (!is.null(time.pt) & slope) {
+        fit <- lmer(y ~ (time.pt | id) + X)
+      } else {
+        fit <- lmer(y ~ (1 | id) + X)
+      }
+    }
+    out <- CSKAT(fit, Ks=Ks)
     return(out)  #This should stop the function from going any further 
   }
-
+  
   if (is.matrix(Ks)) {
     Ks <- list(Ks) 
     no.omnibus <- TRUE 
@@ -151,14 +160,14 @@ GLMMMiRKAT <- function(y, X = NULL, Ks, id = NULL, time.pt = NULL, model, method
       } else {
         fit <- lmer(y ~ (1 | id))
       }
-    } else {
+    } else {  # if X not null 
       if (!is.null(time.pt) & slope) {
         fit <- lmer(y ~ (time.pt | id) + X)
       } else {
         fit <- lmer(y ~ (1 | id) + X)
       }
     }
-  } else {
+  } else {  # if not Gaussian 
     if (is.null(X)) {
       if (!is.null(time.pt) & slope) {
         fit <- glmer(y ~ (time.pt | id), family = model)
@@ -295,7 +304,7 @@ GLMMMiRKAT <- function(y, X = NULL, Ks, id = NULL, time.pt = NULL, model, method
     for (k in 1:nperm) {
       Q0s.inv[k] <- (t(r.s[[k]]) %*% inv.vX %*% Ks[[j]] %*% 
                        inv.vX %*% r.s[[k]])/(t(r.s[[k]]) %*% inv.vX %*% 
-                                                 r.s[[k]])
+                                               r.s[[k]])
     }
     Q0s[[j]] <- Q0s.inv
   }

@@ -1,6 +1,6 @@
 Package: MiRKAT
 Title: Microbiome Regression-Based Analysis Tests
-Version: 1.1.1
+Version: 1.1.2
 Authors@R: c(person("Anna", "Plantinga", role = c("aut", "cre"), email = "amp9@williams.edu"),
              person("Nehemiah", "Wilson", role = c("aut", "ctb")),
              person("Haotian", "Zheng", role = c("aut", "ctb")),
@@ -28,7 +28,7 @@ Imports: MASS, CompQuadForm, quantreg, GUniFrac, PearsonDS, lme4,
 Suggests: knitr, propr, cluster, dirmult, vegan, rmarkdown, tidyverse,
         kableExtra
 VignetteBuilder: knitr, rmarkdown
-Packaged: 2020-08-27 15:42:31 UTC; anna
+Packaged: 2021-01-22 19:43:48 UTC; anna
 Author: Anna Plantinga [aut, cre],
   Nehemiah Wilson [aut, ctb],
   Haotian Zheng [aut, ctb],
@@ -37,4 +37,4 @@ Author: Anna Plantinga [aut, cre],
   Ni Zhao [aut, ctb],
   Jun Chen [aut]
 Repository: CRAN
-Date/Publication: 2020-08-27 20:10:03 UTC
+Date/Publication: 2021-01-22 21:30:02 UTC

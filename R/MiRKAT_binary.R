@@ -96,15 +96,7 @@ MiRKAT_binary = function(y, X = NULL, Ks, method = "davies", family= "binomial",
   D0  =  sqrt(w)  
   DX12 = D0 * X1
   P0 = diag(n) - DX12 %*% solve(t(DX12) %*% (DX12)) %*% t(DX12)
-  
-  ## Simulated Q values 
-  q_sim = sapply(1:nperm, function(i){
-    ind <- sample(n)
-    p1 = sapply(1:length(Ks), function(j) {
-      Q1 = as.numeric(res %*% Ks[[j]][ind, ind] %*% res) # the adjusted is zero in this case 
-      return(Q1)
-    })  
-  }) 
+
   
   ## Individual p-values 
   if (method == "davies"){    
@@ -123,10 +115,22 @@ MiRKAT_binary = function(y, X = NULL, Ks, method = "davies", family= "binomial",
     out_pvs = ps 
   } else if (method == substring("permutation", 1, nchar(method))) {
     Qs = lapply(Ks, getQ, res, s2 = 1)
-    p_perm = (sum(q_sim > Qs)+ 1)/(nperm + 1) 
-    out_pvs = p_perm
-  }
-  
+    
+    ## Simulated Q values 
+    q_sim = sapply(1:nperm, function(i){
+      ind <- sample(n)
+      p1 = sapply(1:length(Ks), function(j) {
+        Q1 = as.numeric(res %*% Ks[[j]][ind, ind] %*% res) # the adjusted is zero in this case 
+        return(Q1)
+      })  
+    }) 
+    
+    q_sim = t(q_sim)
+    Q_all = rbind(unlist(Qs), q_sim) 
+    p_all = 1 - (apply(Q_all, 2, rank) - 1)/(nperm + 1)
+    out_pvs = p_all[1,]
+  } 
+
   names(out_pvs) = names(Ks)
   
   if (length(out_pvs) == 1) {
@@ -142,11 +146,21 @@ MiRKAT_binary = function(y, X = NULL, Ks, method = "davies", family= "binomial",
   }
   
   if (om == "p") {
-    q_sim = t(q_sim)
-    Q_all = rbind(unlist(Qs), q_sim)
-    p_all = 1 - (apply(Q_all, 2, rank)-1)/(nperm + 1)   
-    p_perm = p_all[1,]
-    minP_all= apply(p_all,1, min)
+    if (method != substring("permutation", 1, nchar(method))) {
+      ## Simulated Q values 
+      q_sim = sapply(1:nperm, function(i){
+        ind <- sample(n)
+        p1 = sapply(1:length(Ks), function(j) {
+          Q1 = as.numeric(res %*% Ks[[j]][ind, ind] %*% res) # the adjusted is zero in this case 
+          return(Q1)
+        })  
+      }) 
+      
+      q_sim = t(q_sim)
+      Q_all = rbind(unlist(Qs), q_sim)
+      p_all = 1 - (apply(Q_all, 2, rank)-1)/(nperm + 1) 
+    }
+    minP_all= apply(p_all, 1, min)
     p_final = rank(minP_all)[1]/(nperm + 1)
   } else if (om == "c") {
     cauchy.t <- sum(tan((0.5 - out_pvs)*pi))/length(out_pvs)

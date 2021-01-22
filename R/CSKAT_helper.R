@@ -2,9 +2,7 @@
 #'
 #' Small-sample SKAT for correlated (continuous) data ('c' stands for 'correlated'). Computes the adjusted score statistic and p-value. 
 #' 
-#' @param formula.H0 A two-sided linear formula object under the null, indicating the variables to adjust. Only handles the mixed effects.
-#'  Needed only if model = "gaussian" and method = "davies". 
-#' @param data  an optional data frame containing the variables named in formula.
+#' @param lmer.obj  A fitted lme4 object (model under H0)
 #' @param K    the kernel matrix, which quantifies the similarities between samples
 #' @return
 #' \describe{
@@ -15,18 +13,8 @@
 #' Zhan X, et al. (2018) A small-sample kernel association test for correlated data with application to microbiome association studies.  
 #' Genet Epidemiol., submitted.
 #' 
-#' 
-
-
-inner.CSKAT <- function (formula.H0, data = NULL, K) {
-  
-  H0.lmer <- formula.H0
-  temp <- as.character(H0.lmer)
-  temp[3] <- gsub('\\+\\s*\\(.*?\\)', '',  temp[3], perl=TRUE)
-  
-  H0.lm <- as.formula(paste(temp[2], temp[1], temp[3]))
-  
-  lmer.obj <- lmer(H0.lmer, data)
+#'
+inner.CSKAT <- function (lmer.obj, K) {
   
   var.d <- crossprod(as.matrix(getME(lmer.obj,"Lambdat")))
   Zt <- as.matrix(getME(lmer.obj, "Zt"))
@@ -38,9 +26,8 @@ inner.CSKAT <- function (formula.H0, data = NULL, K) {
   
   Vi <- sqrt.inv(V2)$Vi
   
-  X1 <- model.matrix(H0.lm, data)
-  lhs <- H0.lm[[2]]
-  Y <- eval(lhs, data)
+  X1 <- model.matrix(lmer.obj)
+  Y <- model.frame(lmer.obj)$y
   
   X1 <- Vi %*% X1
   Y <- Vi %*% Y

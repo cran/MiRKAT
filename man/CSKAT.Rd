@@ -2,22 +2,14 @@
 % Please edit documentation in R/CSKAT.R
 \name{CSKAT}
 \alias{CSKAT}
-\title{Small-sample SKAT for correlated (continuous) data ('c' stands for 'correlated')}
+\title{Small-sample SKAT for correlated (continuous) data ('c' stands for 'correlated'). Called within GLMM-MiRKAT.}
 \usage{
-CSKAT(formula.H0, data = NULL, Ks, omnibus = "permutation", nperm = 999)
+CSKAT(lmer.obj, Ks)
 }
 \arguments{
-\item{formula.H0}{A two-sided linear formula object describing both the fixed-effects and random-effects part of
-the model under the null, use the same syntax as the "lmer" in "lme4" package}
-
-\item{data}{An optional data frame containing the variables named in formula. Default: NULL.}
+\item{lmer.obj}{A fitted lme4 object (model under H0)}
 
 \item{Ks}{A kernel matrix or list of kernels, quantifying the similarities between samples.}
-
-\item{omnibus}{A string equal to either "Cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
-to use the Cauchy combination test or residual permutation to generate the omnibus p-value.}
-
-\item{nperm}{Number of permutations for calculating the omnibus p-value. Ignored unless Ks is a list of candidate kernels.}
 }
 \value{
 \describe{
@@ -27,16 +19,6 @@ to use the Cauchy combination test or residual permutation to generate the omnib
 }
 \description{
 Compute the adjusted score statistic and p-value
-}
-\examples{
-
-Y <- rnorm(100)
-Z <- matrix(rnorm(200), 100, 2)
-ID <- gl(20, 5)
-G <- matrix(rbinom(1000, 2, 0.05), 100, 10)
-K <- G \%*\% t(G)
-CSKAT(formula.H0 = Y ~ Z + (1 | ID), Ks = K)
-
 }
 \references{
 Zhan X, et al. (2018) A small-sample kernel association test for correlated data with application to microbiome association studies.  

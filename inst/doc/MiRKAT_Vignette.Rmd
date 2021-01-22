@@ -143,7 +143,7 @@ MiRKAT(y = Smoker, Ks = Ks, X = covar, out_type = "D",
        returnKRV = TRUE, returnR2 = TRUE)
 
 MiRKAT(y = Smoker, Ks = Ks, X = covar, out_type = "D", 
-       method = "davies", omnibus = "Cauchy", 
+       method = "davies", omnibus = "cauchy", 
        returnKRV = FALSE, returnR2 = FALSE)
 ```
   
@@ -154,7 +154,7 @@ The only difference between using a continuous and dichotomous outcome variable 
 ```{r}
 y <- rnorm(nrow(K.weighted))
 MiRKAT(y = y, Ks = Ks, X = covar, out_type = "C", nperm = 999, 
-       method = "davies", omnibus = "Cauchy", returnKRV = TRUE, returnR2 = TRUE)
+       method = "davies", omnibus = "cauchy", returnKRV = TRUE, returnR2 = TRUE)
 ```
 
 This function outputs p-values for association using each single kernel and an omnibus p-value considering all kernels. The omnibus p-value is obtained through residual permutation where the minimum p-values from each of the individual tests are used as test statistics. As before, the "method" option only indicates the method that is used for generating individual kernel p-values. 
@@ -181,7 +181,7 @@ The p-value for the test may be generated using permutation or Davies' exact met
 ```{r}
 # Davies' exact method 
 MiRKATS(obstime = ObsTime, delta = Delta, X = cbind(Smoker, Male, anti), Ks = Ks, 
-        perm = F, omnibus = "Cauchy", returnKRV = T, returnR2 = T)
+        perm = F, omnibus = "cauchy", returnKRV = T, returnR2 = T)
 ```
 
 Using "perm = T" indicates that a permutation p-value should be calculated for each kernel-specific test. Overall, permutation is recommended when the sample size is small, as Davies' method may be slightly anti-conservative with very small sample sizes. MiRKAT-S will generate a warning when permutation is not used for sample sizes $n \leq 50$. "nperm" indicates the number of permutations to perform to generate the p-value (default = 1000). 
@@ -189,7 +189,7 @@ Using "perm = T" indicates that a permutation p-value should be calculated for e
 ```{r}
 # Permutation 
 MiRKATS(obstime = ObsTime, delta = Delta, X = cbind(Smoker, Male, anti), Ks = Ks, 
-        perm = T, omnibus = "Cauchy", returnKRV = T, returnR2 = T)
+        perm = T, omnibus = "cauchy", returnKRV = T, returnR2 = T)
 ```
 
 As above, the omnibus p-value may be generated either using residual permutation to create a null distribution of minimum p-values, and the minimum p-value from the original MiRKAT-S analysis is tested against this distribution as the test statistic of the omnibus test, or using the Cauchy combination test. The permutation-based omnibus test is described further at https://github.com/hk1785/OMiSA (Koh 2018, DOI: https://doi.org/10.1186/s12864-018-4599-8). 
@@ -266,9 +266,9 @@ MiRKAT.Q(y = y, X= cbind(Male, anti), Ks = Ks)
 ```
 
 
-## CSKAT: Longitudinal/Correlated Data, Continuous Outcomes
+## GLMM-MiRKAT: Longitudinal/Correlated Continuous, Binary, or Count Data (Generalized Linear Mixed Model)
 
-CSKAT is designed to allow for microbiome association testing using longitudinal or otherwise correlated data. It is sometimes useful to look for micriobiome association not from single measurements of many people, but rather from measuring only a select few people multiple times across a longer time period. This case-study-like approach allows researchers to do things like track the effectiveness of a certain drug on a group of patients. It also allows researchers to do microbiome association testing on family members, so as to lessen the confounding effects of DNA. In both scenarios, the assumption of independence that all the above functions require is not met. CSKAT allows for microbiome association testing despite this dependence. 
+GLMM-MiRKAT allows for association testing between the microbiome and Guassian, binomial (e.g. disease status, treatment/placebo) and Poisson (e.g. number of tumors/treatments) traits with correlated data resulting from longitudinal studies or family-based studies. For Gaussian traits, calculation of P-values may use the Davies method and Cauchy combination test or permutation; other outcome types only permit a permuation approach for p-value and omnibus p-value calculations. 
 
 We switch to a different simulation approach for these last two functions, as they both deal with correlated data.
 
@@ -306,38 +306,19 @@ Ks <- list(K.weighted = K.weighted,
 ```
 
 
-### Testing Using Multiple Kernels
-
-```{r}
-CSKAT(formula.H0 = y ~ x1 + x2 + (1 | id), data = meta, Ks = Ks)
-```
-
-## GLMM-MiRKAT: Longitudinal/Correlated Continuous, Binary, or Count Data (Generalized Linear Mixed Model)
-
-While CSKAT allows for miciobiome association testing with Gaussian traits (such as body mass index), GLMMMiRKAT allows for Guassian, binomial (e.g. disease status, treatment/placebo) and Poisson (e.g. number of tumors/treatments) traits, making it a much more versatile function overall when it comes to correlated data. 
-
-GLMM-MiRKAT uses a permuation approach for its p-value and omnibus p-value calculations. Because of this, however, it is not as computationally efficient as CSKAT when it comes to Gaussian traits, especially with larger samples. This is because CSKAT uses a computational approach rather than a permuation one, using the Davies function for its p-value calculation. CSKAT is called by GLMM-MiRKAT when GLMM-MiRKAT is given a Gaussian trait and method = "davies".
-
-
 ### Example 1. Gaussian traits (e.g., body mass index)
 
 GLMM-MiRKAT returns kernel-specific and omnibus p-values. No measures of effect size are available for GLMM-MiRKAT. 
  
 ```{r}
+# GLMM-MiRKAT with computational p-values (Davies + Cauchy combination test)
+GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, Ks = Ks, 
+           model = "gaussian", method = "davies", omnibus = "perm")
+
 # GLMM-MiRKAT with permutation test
-GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, Ks = Ks, model = "gaussian")
+GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, Ks = Ks, 
+           model = "gaussian")
 ```
-
-With options model = "gaussian" and method = "davies", GLMM-MiRKAT is equivalent to CSKAT (as described above). 
-
-```{r}
-# GLMM-MiRKAT with Davies p-value (equivalent to CSKAT) 
-GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), Ks = Ks, 
-           id = meta$id, model = "gaussian", method = "davies", 
-           formula.H0 = y ~ cbind(meta$x1, meta$x2) + (1 | meta$id), 
-           slope = FALSE)
-```
-
 
 ### Example 2. Binomial traits (e.g., disease status, treatment/placebo)
  

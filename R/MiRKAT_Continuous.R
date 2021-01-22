@@ -54,11 +54,10 @@
 #'(eVCTest), in submission.
 
 
-MiRKAT_continuous = function(y, X = NULL, Ks, method = "davies", omnibus = "permutation", 
+MiRKAT_continuous = function(y, X = NULL, Ks, method, omnibus, 
                              nperm = 999, returnKRV = FALSE, returnR2 = FALSE){
   
   om <- substring(tolower(omnibus), 1, 1)
-  
   n = length(y) 
   
   if (is.null(X)) {
@@ -80,20 +79,18 @@ MiRKAT_continuous = function(y, X = NULL, Ks, method = "davies", omnibus = "perm
   X1 <- X1[, qX1$pivot, drop=FALSE]
   X1 <- X1[, 1:qX1$rank, drop=FALSE]
   
-  p <- NCOL(X1)
   mod <- lm(y ~ X1-1)
   s2  = summary(mod)$s**2
   D0  = diag(n)#diag(mu*(1-mu)) for logistic
   res = resid(mod)
   P0  = D0 - X1%*%solve(t(X1)%*%X1)%*%t(X1)
-  px  = NCOL(X1)
+  px  = ncol(X1)
   
   ## Individual test statistics 
-  if (is.matrix(Ks)){Ks = list(Ks)}
   Qs = lapply(Ks, getQ, res, s2)  
   
   ## Permuted test stats 
-  if (method == "permutation" |  om == "p") {
+  if (method == "permutation" | (length(Ks) > 1 & om == "p")) {
     q_sim =  sapply(1:nperm, function(i) {
       ind <- sample(n)
       sapply(1:length(Ks),function(j){

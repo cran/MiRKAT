@@ -12,7 +12,6 @@ GLMMMiRKAT(
   time.pt = NULL,
   model,
   method = "perm",
-  formula.H0 = NULL,
   slope = FALSE,
   omnibus = "perm",
   nperm = 5000
@@ -32,14 +31,11 @@ unnecessary for the CSKAT call.}
 \item{time.pt}{A vector of time points for the longitudinal studies. 'time.pt' is not required (i.e., 'time.pt = NULL') 
 for the random intercept model. Default is time.pt = NULL.}
 
-\item{model}{A string declaring which model ("gaussian", "binmoial" or "poisson") is to be used; should align with whether a 
+\item{model}{A string declaring which model ("gaussian", "binomial" or "poisson") is to be used; should align with whether a 
 Gaussian, Binomial, or Poisson trait is being inputted for the y argument.}
 
-\item{method}{A string declaring which method ("permu" or "davies) will be used to calculate the p-value. Davies is only 
+\item{method}{A string declaring which method ("perm" or "davies) will be used to calculate the p-value. Davies is only 
 available for Gaussian traits. Defaults to "perm".}
-
-\item{formula.H0}{A two-sided linear formula object under the null, indicating the variables to adjust. Handles both the random and
-mixed effects. Needed only if model = "gaussian" and method = "davies. Defaults to NULL.}
 
 \item{slope}{An indicator to include random slopes in the model (slope = TRUE) or not (slope = FALSE). 'slope = FALSE' is for 
 the random intercept model. 'slope = TRUE' is for the random slope model. For the random slope model (slope = TRUE), 'time.pt' 
@@ -70,8 +66,6 @@ through other mathematical approaches.
          
 If model="gaussian" and method="davies", CSKAT is called. CSKAT utilizes the same omnibus test as GLMMMiRKAT. See ?CSKAT for more details.
 
-formula.H0 is required only if model="gaussian" and method="davies". In all other situations, it may be left NULL. 
-         
 The "method" argument only determines kernel-specific p-values are generated. When Ks is a list of multiple kernels,
 an omnibus p-value is computed via permutation.
 }

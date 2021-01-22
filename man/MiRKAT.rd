@@ -32,7 +32,7 @@ inverting the characteristic function of the mixture chisq. We adopt an exact va
 concerning microbiome compositions have modest sample size. "moment" represents an approximation method that matches the first
 two moments. "permutation" represents a permutation approach for p-value calculation. Defaults to "davies".}
 
-\item{omnibus}{A string equal to either "Cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
+\item{omnibus}{A string equal to either "cauchy" or "permutation" (or nonambiguous abbreviations thereof), specifying whether 
 to use the Cauchy combination test or residual permutation to generate the omnibus p-value.}
 
 \item{nperm}{The number of permutations if method = "permutation" or when multiple kernels are considered. If method = "davies" or 

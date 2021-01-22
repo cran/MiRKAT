@@ -58,13 +58,13 @@ MiRKAT(y = Smoker, Ks = Ks, X = covar, out_type = "D",
        returnKRV = TRUE, returnR2 = TRUE)
 
 MiRKAT(y = Smoker, Ks = Ks, X = covar, out_type = "D", 
-       method = "davies", omnibus = "Cauchy", 
+       method = "davies", omnibus = "cauchy", 
        returnKRV = FALSE, returnR2 = FALSE)
 
 ## -----------------------------------------------------------------------------
 y <- rnorm(nrow(K.weighted))
 MiRKAT(y = y, Ks = Ks, X = covar, out_type = "C", nperm = 999, 
-       method = "davies", omnibus = "Cauchy", returnKRV = TRUE, returnR2 = TRUE)
+       method = "davies", omnibus = "cauchy", returnKRV = TRUE, returnR2 = TRUE)
 
 ## -----------------------------------------------------------------------------
 # Simulate outcomes
@@ -78,12 +78,12 @@ ObsTime <- pmin(SurvTime, CensTime)
 ## -----------------------------------------------------------------------------
 # Davies' exact method 
 MiRKATS(obstime = ObsTime, delta = Delta, X = cbind(Smoker, Male, anti), Ks = Ks, 
-        perm = F, omnibus = "Cauchy", returnKRV = T, returnR2 = T)
+        perm = F, omnibus = "cauchy", returnKRV = T, returnR2 = T)
 
 ## -----------------------------------------------------------------------------
 # Permutation 
 MiRKATS(obstime = ObsTime, delta = Delta, X = cbind(Smoker, Male, anti), Ks = Ks, 
-        perm = T, omnibus = "Cauchy", returnKRV = T, returnR2 = T)
+        perm = T, omnibus = "cauchy", returnKRV = T, returnR2 = T)
 
 ## -----------------------------------------------------------------------------
 set.seed(1)
@@ -139,18 +139,13 @@ Ks <- list(K.weighted = K.weighted,
            K.generalized = K.generalized)
 
 ## -----------------------------------------------------------------------------
-CSKAT(formula.H0 = y ~ x1 + x2 + (1 | id), data = meta, Ks = Ks)
+# GLMM-MiRKAT with computational p-values (Davies + Cauchy combination test)
+GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, Ks = Ks, 
+           model = "gaussian", method = "davies", omnibus = "perm")
 
-## -----------------------------------------------------------------------------
 # GLMM-MiRKAT with permutation test
-GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, Ks = Ks, model = "gaussian")
-
-## -----------------------------------------------------------------------------
-# GLMM-MiRKAT with Davies p-value (equivalent to CSKAT) 
-GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), Ks = Ks, 
-           id = meta$id, model = "gaussian", method = "davies", 
-           formula.H0 = y ~ cbind(meta$x1, meta$x2) + (1 | meta$id), 
-           slope = FALSE)
+GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, Ks = Ks, 
+           model = "gaussian")
 
 ## -----------------------------------------------------------------------------
  # Import microbiome data with binomial traits

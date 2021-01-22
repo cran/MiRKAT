@@ -4,13 +4,10 @@
 \alias{inner.CSKAT}
 \title{Inner Function for CSKAT, Correlated Sequence Kernel Association Test}
 \usage{
-inner.CSKAT(formula.H0, data = NULL, K)
+inner.CSKAT(lmer.obj, K)
 }
 \arguments{
-\item{formula.H0}{A two-sided linear formula object under the null, indicating the variables to adjust. Only handles the mixed effects.
-Needed only if model = "gaussian" and method = "davies".}
-
-\item{data}{an optional data frame containing the variables named in formula.}
+\item{lmer.obj}{A fitted lme4 object (model under H0)}
 
 \item{K}{the kernel matrix, which quantifies the similarities between samples}
 }
