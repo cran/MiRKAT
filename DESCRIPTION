@@ -1,23 +1,24 @@
 Package: MiRKAT
 Title: Microbiome Regression-Based Analysis Tests
-Version: 1.1.2
+Version: 1.1.3
 Authors@R: c(person("Anna", "Plantinga", role = c("aut", "cre"), email = "amp9@williams.edu"),
              person("Nehemiah", "Wilson", role = c("aut", "ctb")),
              person("Haotian", "Zheng", role = c("aut", "ctb")),
              person("Xiang", "Zhan", role = c("aut", "ctb")),
              person("Michael", "Wu", role = "aut"),
              person("Ni", "Zhao", role = c("aut", "ctb")),
-	           person("Jun", "Chen", role = "aut"))
+	           person("Jun", "Chen", role = "aut"), 
+	           person("Hongjiao", "Liu", role = c("aut", "ctb")))
 Maintainer: Anna Plantinga <amp9@williams.edu>
 Description: Test for overall association between microbiome composition data and phenotypes via phylogenetic kernels. 
   The phenotype can be univariate continuous or binary (Zhao et al. (2015) <doi:10.1016/j.ajhg.2015.04.003>), 
   survival outcomes (Plantinga et al. (2017) <doi:10.1186/s40168-017-0239-9>), 
   multivariate (Zhan et al. (2017) <doi:10.1002/gepi.22030>) and 
   structured phenotypes (Zhan et al. (2017) <doi:10.1111/biom.12684>). 
-  The package can also use robust and quantile regression (Fu et al. (2020+), in preparation). 
+  The package can also use robust and quantile regression (unpublished work).  
   In each case, the microbiome community effect is modeled nonparametrically through a kernel function, 
   which can incorporate phylogenetic tree information. 
-Depends: R (>= 3.0.2)
+Depends: R (>= 3.5.0)
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
@@ -28,13 +29,14 @@ Imports: MASS, CompQuadForm, quantreg, GUniFrac, PearsonDS, lme4,
 Suggests: knitr, propr, cluster, dirmult, vegan, rmarkdown, tidyverse,
         kableExtra
 VignetteBuilder: knitr, rmarkdown
-Packaged: 2021-01-22 19:43:48 UTC; anna
+Packaged: 2021-05-26 13:17:45 UTC; anna
 Author: Anna Plantinga [aut, cre],
   Nehemiah Wilson [aut, ctb],
   Haotian Zheng [aut, ctb],
   Xiang Zhan [aut, ctb],
   Michael Wu [aut],
   Ni Zhao [aut, ctb],
-  Jun Chen [aut]
+  Jun Chen [aut],
+  Hongjiao Liu [aut, ctb]
 Repository: CRAN
-Date/Publication: 2021-01-22 21:30:02 UTC
+Date/Publication: 2021-05-26 13:50:02 UTC

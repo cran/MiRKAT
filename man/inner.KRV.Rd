@@ -7,6 +7,7 @@
 inner.KRV(
   y = NULL,
   X = NULL,
+  adjust.type,
   kernel.otu,
   kernel.y,
   returnKRV = FALSE,
@@ -14,18 +15,28 @@ inner.KRV(
 )
 }
 \arguments{
-\item{y}{A numeric n by p matrix of p continuous phenotype variables and sample size n (default = NULL). If y is NULL, a 
+\item{y}{A numeric n by p matrix of p continuous phenotype variables and 
+sample size n (default = NULL). If it is NULL, a 
 phenotype kernel matrix must be entered for "kernel.y". Defaults to NULL.}
 
-\item{X}{A numeric n by q matrix, containing q additional covariates (default = NULL). If NULL, an intercept only model was fit. 
-No covariate adjustment is possible if a matrix is provided for kernel.y.}
+\item{X}{A numeric n by q matrix, containing q additional covariates 
+(default = NULL). If NULL, an intercept only model is used. If the first
+column of X is not uniformly 1, then an intercept column will be added.}
 
-\item{kernel.otu}{A numeric n by n kernel matrix, where n is sample size. It can be constructed from microbiome data, such as
-by transforming from a distance metric.}
+\item{adjust.type}{Possible values are "none" (default if X is null), 
+"phenotype" to adjust only the y variable (only possible if y is a numeric 
+phenotype matrix rather than a pre-computed kernel), or "both" to adjust 
+both the X and Y kernels.}
 
-\item{kernel.y}{Either a numeric n by n kernel matrix of phenotype or a method to compute the kernel of phenotype. Gaussian
-kernel (kernel.y="Gaussian") can capture general relationship between microbiome and phenotypes; and linear kernel 
-(kernel.y="linear") can be preferred if the underlying relationship is close to linear.}
+\item{kernel.otu}{A numeric OTU n by n kernel matrix or a list of matrices, 
+where n is the sample size. It can be constructed from microbiome data, such 
+as by transforming from a distance metric.}
+
+\item{kernel.y}{Either a numerical n by n kernel matrix for phenotypes or a 
+method to compute the kernel of phenotype. Methods are "Gaussian" or "linear". 
+A Gaussian kernel (kernel.y="Gaussian") can capture the general relationship 
+between microbiome and phenotypes; a linear kernel (kernel.y="linear") 
+may be preferred if the underlying relationship is close to linear.}
 
 \item{returnKRV}{A logical indicating whether to return the KRV statistic. Defaults to FALSE.}
 

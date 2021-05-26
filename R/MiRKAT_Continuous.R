@@ -81,13 +81,16 @@ MiRKAT_continuous = function(y, X = NULL, Ks, method, omnibus,
   
   mod <- lm(y ~ X1-1)
   s2  = summary(mod)$s**2
-  D0  = diag(n)#diag(mu*(1-mu)) for logistic
+  D0  = diag(n) 
   res = resid(mod)
   P0  = D0 - X1%*%solve(t(X1)%*%X1)%*%t(X1)
   px  = ncol(X1)
   
   ## Individual test statistics 
-  Qs = lapply(Ks, getQ, res, s2)  
+  Qs <- c() 
+  for (i in 1:length(Ks)) {
+    Qs <- c(Qs, getQ(K = Ks[[i]], res, s2))
+  }
   
   ## Permuted test stats 
   if (method == "permutation" | (length(Ks) > 1 & om == "p")) {
@@ -101,7 +104,7 @@ MiRKAT_continuous = function(y, X = NULL, Ks, method, omnibus,
   }
   
   ## Individual p-values 
-  if (method == "davies"){    
+  if (method == "davies") {    
     lambda0 = lapply(Ks, getLambda_davies, P0)
     ps = rep(NA, length(Ks))
     for (i in 1:length(Ks)){
@@ -118,10 +121,18 @@ MiRKAT_continuous = function(y, X = NULL, Ks, method, omnibus,
   } else if (method == substr("permutation", 1, nchar(method))) {
     # P = (# of statistics permutation >= observed test statistics + 1) / (#permutation + 1), 
     # thus the smallest p value will be  1/ (# permutation + 1).
-    Q_all = rbind(unlist(Qs), q_sim)
-    p_all = 1 - (apply(Q_all, 2, rank) -1)/(nperm +1)  
-    p_perm = p_all[1,]
-    out_pvs = p_perm 
+    if (length(Ks) > 1) {
+      Q_all = rbind(unlist(Qs), q_sim)
+      p_all = 1 - (apply(Q_all, 2, rank) - 1)/(nperm + 1) 
+      p_perm = p_all[1,]
+      out_pvs = p_perm 
+    } else {
+      Q_all <- c(unlist(Qs), q_sim)
+      p_all <- 1 - (rank(Q_all) - 1)/(nperm + 1)
+      p_perm = p_all[1] 
+      out_pvs <- p_perm
+    }
+    
   }
   
   ## name indiv p-values 

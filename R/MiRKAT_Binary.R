@@ -126,9 +126,16 @@ MiRKAT_binary = function(y, X = NULL, Ks, method = "davies", family= "binomial",
     }) 
     
     q_sim = t(q_sim)
-    Q_all = rbind(unlist(Qs), q_sim) 
-    p_all = 1 - (apply(Q_all, 2, rank) - 1)/(nperm + 1)
-    out_pvs = p_all[1,]
+    
+    if (length(Ks) > 1) {
+      Q_all = rbind(unlist(Qs), q_sim) 
+      p_all = 1 - (apply(Q_all, 2, rank) - 1)/(nperm + 1)
+      out_pvs = p_all[1,]
+    } else {
+      Q_all <- c(unlist(Qs), q_sim)
+      p_all <- 1 - (rank(Q_all) - 1)/(nperm + 1)
+      out_pvs <- p_all[1] 
+    }
   } 
 
   names(out_pvs) = names(Ks)

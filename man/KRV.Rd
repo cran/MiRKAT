@@ -7,6 +7,7 @@
 KRV(
   y = NULL,
   X = NULL,
+  adjust.type = NULL,
   kernels.otu,
   kernel.y,
   omnibus = "kernel_om",
@@ -15,21 +16,32 @@ KRV(
 )
 }
 \arguments{
-\item{y}{A numeric n by p matrix of p continuous phenotype variables and sample size n (default = NULL). If it is NULL, a 
+\item{y}{A numeric n by p matrix of p continuous phenotype variables and 
+sample size n (default = NULL). If it is NULL, a 
 phenotype kernel matrix must be entered for "kernel.y". Defaults to NULL.}
 
-\item{X}{A numeric n by q matrix, containing q additional covariates (default = NULL). If NULL, 
-an intercept only model is used. No covariate adjustment is possible if a matrix is provided in kernel.y.}
+\item{X}{A numeric n by q matrix, containing q additional covariates 
+(default = NULL). If NULL, an intercept only model is used. If the first
+column of X is not uniformly 1, then an intercept column will be added.}
 
-\item{kernels.otu}{A numeric OTU n by n kernel matrix or a list of matrices, where n is the sample size. It can be 
-constructed from microbiome data, such as by transforming from a distance metric.}
+\item{adjust.type}{Possible values are "none" (default if X is null), 
+"phenotype" to adjust only the y variable (only possible if y is a numeric 
+phenotype matrix rather than a pre-computed kernel), or "both" to adjust 
+both the X and Y kernels.}
 
-\item{kernel.y}{Either a numerical n by n kernel matrix for phenotypes or a method to compute the kernel of phenotype. Methods are "Gaussian" or "linear". 
-A Gaussian kernel (kernel.y="Gaussian") can capture the general relationship between microbiome and phenotypes; a linear kernel (kernel.y="linear") 
+\item{kernels.otu}{A numeric OTU n by n kernel matrix or a list of matrices, 
+where n is the sample size. It can be constructed from microbiome data, such 
+as by transforming from a distance metric.}
+
+\item{kernel.y}{Either a numerical n by n kernel matrix for phenotypes or a 
+method to compute the kernel of phenotype. Methods are "Gaussian" or "linear". 
+A Gaussian kernel (kernel.y="Gaussian") can capture the general relationship 
+between microbiome and phenotypes; a linear kernel (kernel.y="linear") 
 may be preferred if the underlying relationship is close to linear.}
 
-\item{omnibus}{A string equal to either "Cauchy" or "kernel_om" (or nonambiguous abbreviations thereof), specifying whether 
-to use the Cauchy combination test or an omnibus kernel to generate the omnibus p-value.}
+\item{omnibus}{A string equal to either "Cauchy" or "kernel_om" (or unambiguous 
+abbreviations thereof), specifying whether to use the Cauchy combination test 
+or an omnibus kernel to generate the omnibus p-value.}
 
 \item{returnKRV}{A logical indicating whether to return the KRV statistic. Defaults to FALSE.}
 
@@ -44,20 +56,24 @@ If more than one candidate kernel matrix is considered, returns a list of two el
     \item{R2}{A vector of R-squared statistics, one for each candidate kernel matrix. Only returned if returnR2 = TRUE}
 }
 \description{
-Kernel RV coefficient test to evaluate the overall association between microbiome composition and high-dimensional or
-structured phenotype.
+Kernel RV coefficient test to evaluate the overall association between 
+microbiome composition and high-dimensional or structured phenotype or genotype.
 }
 \details{
-kernels.otu should be a list of numerical n by n kernel matrices, or a single n by n kernel matrix, where n is sample size.
+kernels.otu should be a list of numerical n by n kernel matrices, or a single 
+n by n kernel matrix, where n is sample size.
 
-When kernel.y is a method ("Gaussian" or "linear") to compute the kernel of phenotype, y should be a numerical phenotype matrix, 
-and X (if not NULL) should be a numeric matrix of covariates. Both y and X should have n rows.
+When kernel.y is a method ("Gaussian" or "linear") to compute the kernel of 
+phenotype, y should be a numerical phenotype matrix, and X (if not NULL) 
+should be a numeric matrix of covariates. Both y and X should have n rows.
 
-When kernel.y is a kernel matrix for the phenotype, there is no need to provide X and y, and they will be ignored if provided.
-In this case, kernel.y and kernel.otu should both be numeric matrices with the same number of rows and columns.
+When kernel.y is a kernel matrix for the phenotype, there is no need to provide 
+X and y, and they will be ignored if provided. In this case, kernel.y and 
+kernel.otu should both be numeric matrices with the same number of rows and columns.
 
-Missing data is not permitted. Please remove all individuals with missing kernel.otu, y (if not NULL), X (if not NULL), and 
-kernel.y (if a matrix is entered) prior to analysis.
+Missing data is not permitted. Please remove all individuals with missing 
+kernel.otu, y (if not NULL), X (if not NULL), and kernel.y (if a matrix is 
+entered) prior to analysis.
 }
 \examples{
         
@@ -68,41 +84,63 @@ data(throat.tree)
 data(throat.otu.tab)
 data(throat.meta)
 
-
+## Simulate covariate data 
 set.seed(123)
 n = nrow(throat.otu.tab)
 Sex <- throat.meta$Sex
 Smoker <- throat.meta$SmokingStatus
 anti <- throat.meta$AntibioticUsePast3Months_TimeFromAntibioticUsage
 Male = (Sex == "Male")**2
-Smoker =(Smoker == "Smoker") **2
-anti =  (anti != "None")^2
-cova = cbind(Male,  anti)
+Smoker = (Smoker == "Smoker") **2
+Anti =  (anti != "None")^2
+cova = cbind(1, Male, Smoker, Anti)
 
+## Simulate microbiome data
 otu.tab.rff <- Rarefy(throat.otu.tab)$otu.tab.rff
 unifracs <- GUniFrac(otu.tab.rff, throat.tree, alpha=c(0, 0.5, 1))$unifracs
-
+# Distance matrices
 D.weighted = unifracs[,,"d_1"]
 D.unweighted = unifracs[,,"d_UW"]
 D.BC= as.matrix(vegdist(otu.tab.rff , method="bray"))
-
-
+# Kernel matrices 
 K.weighted = D2K(D.weighted)
 K.unweighted = D2K(D.unweighted)
 K.BC = D2K(D.BC)
 
+# Simulate phenotype data 
 rho = 0.2
 Va = matrix(rep(rho, (2*n)^2), 2*n, 2*n)+diag(1-rho, 2*n)
-G = mvrnorm(n, rep(0, 2*n), Va)
+Phe = mvrnorm(n, rep(0, 2*n), Va)  
+K.y = Phe \%*\% t(Phe)  # phenotype kernel 
 
-KRV(kernels.otu = K.weighted, kernel.y = G \%*\% t(G)) 
+# Simulate genotype data
+G = matrix(rbinom(n*10, 2, 0.1), n, 10) 
+K.g = G \%*\% t(G)  # genotype kernel
 
+
+## Unadjusted analysis (microbiome and phenotype)
+KRV(y = Phe, kernels.otu = K.weighted, kernel.y = "Gaussian")  # numeric y 
+KRV(kernels.otu = K.weighted, kernel.y = K.y)  # kernel y 
+
+## Adjusted analysis (phenotype only)
+KRV(kernels.otu = K.weighted, y = Phe, kernel.y = "linear", X = cova, adjust.type = "phenotype")
+
+## Adjusted analysis (adjust both kernels; microbiome and phenotype) 
+KRV(kernels.otu = K.BC, kernel.y = K.y, X = cova, adjust.type='both')
+
+## Adjusted analysis (adjust both kernels; microbiome and genotype)
+KRV(kernels.otu = K.BC, kernel.y = K.g, X = cova, adjust.type='both')
 
 
 }
 \references{
 Zheng, Haotian, Zhan, X., Plantinga, A., Zhao, N., and Wu, M.C. A Fast Small-Sample Kernel Independence Test for Microbiome 
 Community-Level Association Analysis. Biometrics. 2017 Mar 10. doi: 10.1111/biom.12684.
+
+Liu, Hongjiao, Ling, W., Hua, X., Moon, J.Y., Williams-Nguyen, J., Zhan, X., Plantinga, A.M., Zhao, N., 
+Zhang, A., Durazo-Arzivu, R.A., Knight, R., Qi, Q., Burk, R.D., Kaplan, R.C., and Wu, M.C. 
+Kernel-based genetic association analysis for microbiome phenotypes identifies host genetic 
+drivers of beta-diversity. 2021+
 }
 \author{
 Nehemiah Wilson, Haotian Zheng, Xiang Zhan, Ni Zhao

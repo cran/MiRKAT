@@ -13,17 +13,26 @@
 #' Parameter "method" only concerns how kernel specific p-values are generated. When Ks is a list of multiple kernels, omnibus
 #' p-value is computed through permutation from each individual p-value, which are calculated through method of choice.
 #' 
-#' @param y  A numeric n by p matrix of p continuous phenotype variables and sample size n (default = NULL). If y is NULL, a 
+#' @param y  A numeric n by p matrix of p continuous phenotype variables and 
+#' sample size n (default = NULL). If it is NULL, a 
 #' phenotype kernel matrix must be entered for "kernel.y". Defaults to NULL.
-#' @param X A numeric n by q matrix, containing q additional covariates (default = NULL). If NULL, an intercept only model was fit. 
-#' No covariate adjustment is possible if a matrix is provided for kernel.y. 
-#' @param kernel.otu A numeric n by n kernel matrix, where n is sample size. It can be constructed from microbiome data, such as
-#'  by transforming from a distance metric.
-#' @param kernel.y Either a numeric n by n kernel matrix of phenotype or a method to compute the kernel of phenotype. Gaussian
-#'  kernel (kernel.y="Gaussian") can capture general relationship between microbiome and phenotypes; and linear kernel 
-#'  (kernel.y="linear") can be preferred if the underlying relationship is close to linear.
+#' @param X A numeric n by q matrix, containing q additional covariates 
+#' (default = NULL). If NULL, an intercept only model is used. If the first
+#' column of X is not uniformly 1, then an intercept column will be added. 
+#' @param  adjust.type Possible values are "none" (default if X is null), 
+#' "phenotype" to adjust only the y variable (only possible if y is a numeric 
+#' phenotype matrix rather than a pre-computed kernel), or "both" to adjust 
+#' both the X and Y kernels. 
+#' @param kernel.otu A numeric OTU n by n kernel matrix or a list of matrices, 
+#' where n is the sample size. It can be constructed from microbiome data, such 
+#' as by transforming from a distance metric.
+#' @param kernel.y Either a numerical n by n kernel matrix for phenotypes or a 
+#' method to compute the kernel of phenotype. Methods are "Gaussian" or "linear". 
+#' A Gaussian kernel (kernel.y="Gaussian") can capture the general relationship 
+#' between microbiome and phenotypes; a linear kernel (kernel.y="linear") 
+#' may be preferred if the underlying relationship is close to linear. 
 #' @param returnKRV A logical indicating whether to return the KRV statistic. Defaults to FALSE. 
-#' @param returnR2 A logical indicating whether to return the R-squared coefficient. Defaults to FALSE.  
+#' @param returnR2 A logical indicating whether to return the R-squared coefficient. Defaults to FALSE.
 #'  
 #' 
 #' @return Returns a p-value for the candidate kernel matrix
@@ -40,97 +49,43 @@
 #' 
 #'
 #'
-inner.KRV <- function(y = NULL, X = NULL, kernel.otu, kernel.y, returnKRV = FALSE, returnR2 = FALSE){
+inner.KRV <- function(y = NULL, X = NULL, adjust.type, 
+                      kernel.otu, kernel.y, returnKRV = FALSE, returnR2 = FALSE){
   
-  ### Warnings dealing with incorrect inputs 
-  
-  if(!is.matrix(kernel.otu)) {
-    stop("Please provide a kernel matrix for microbiome data")
-  }
-  
-  if(is.matrix(kernel.y)){
-    n = nrow(kernel.otu)
-    if(!is.null(X)){
-      warning("Covariates can't be adjusted for in this case, and hence argument \"X\" will be ignored.\n")
-    }
-    if(!is.null(y)){
-      warning("When a phenotype kernel is provided, argument \"y\" will be ignored.\n")
-    }
-    if(ncol(kernel.otu)!=n|nrow(kernel.y)!=n|ncol(kernel.y)!=n){
-      stop("Kernel matrices need to be n x n, where n is the sample size.\n ")
-    }
-  }
-  
-  if(!is.matrix(kernel.y)){
-    if (!(kernel.y %in%  c("Gaussian", "linear"))){
-      stop("Please choose kernel.y = \"Gaussian\" or \"linear\", or enter a kernel matrix for \"kernel.y\".\n")
-    }
-    if(is.null(y)){
-      stop("Please enter a phenotype matrix for argument \"y\" or enter a kernel matrix for argument \"kernel.y\".\n")
-    }
-    n = NROW(y)
-    if(nrow(kernel.otu)!=n|ncol(kernel.otu)!=n){
-      stop("Kernel matrix needs to be n x n, where n is the sample size. \n ")
-    }
-    if (any(is.na(y))){
-      ids = which(is.na(y))
-      stop(paste("Missing response for subject(s)", ids, "- please remove before proceeding. \n"))
-    }
-    if (!is.null(X)){
-      if (any(is.na(X))){
-        stop("NAs in covariates X, please impute or remove subjects with missing covariates values.\n") 
-      }  
-      if(NROW(X)!= NROW(y)) stop("Dimensions of X and y don't match.\n")
-    }
-  }
-  
-  
-  K = kernel.otu
-  
-  ## A toy function to calculate a Gaussian kernel matrix
-  kern_g=function(zz){
-    n=nrow(zz)
-    D=matrix(NA,nrow=n,ncol=n)  ## the pairwise distance matrix
-    for(i in 1:n){
-      for(j in 1:n){
-        D[i,j]=sum((zz[i,]-zz[j,])^2)
-      }}	
-    temp=c(D)
-    D1=temp[temp>0]
-    scl=median(D1)   ## use the median distance as the bandwidth
-    K=matrix(NA,nrow=n,ncol=n)
-    for(i in 1:n){
-      for(j in 1:n){
-        K[i,j]=exp(-sum((zz[i,]-zz[j,])^2)/scl)
-      }}		
-    return(K)
-  }
-  
+  K = kernel.otu 
   
   n=nrow(K)
   I.n=diag(1,n)
   I.1=rep(1,n)
   
-  if(is.matrix(kernel.y)){
+  if (is.matrix(kernel.y)) {
     L = kernel.y
-  }
-  else{
-    if(!is.null(X)){
+    if (!is.null(adjust.type)) {
+      if (adjust.type == "b") {
+        Px = X %*% chol2inv(chol(t(X) %*% X)) %*% t(X) # projection matrix of X
+        K = (I.n - Px) %*% kernel.otu %*% (I.n - Px)
+        L = (I.n - Px) %*% L %*% (I.n - Px)
+      }
+    }  
+  } else {
+    if (is.null(adjust.type)) {
+      err.Y = y
+      if (kernel.y == "Gaussian") { L = kern_g(err.Y) } 
+      if(kernel.y == "linear") { L = err.Y%*%t(err.Y) }
+    } else if (adjust.type == "b") {
+      if (kernel.y == "Gaussian") { L = kern_g(y) } 
+      if (kernel.y == "linear") { L = y %*% t(y) }
+      Px = X %*% chol2inv(chol(t(X) %*% X)) %*% t(X) # projection matrix of X
+      K = (I.n - Px) %*% kernel.otu %*% (I.n - Px)
+      L = (I.n - Px) %*% L %*% (I.n - Px)
+    } else if (adjust.type == "p") {
       Px=X%*%solve(t(X)%*%X)%*%t(X)
       err.Y=(I.n-Px)%*%y
-    }
-    else{
-      err.Y = y
-    }
-    if(kernel.y == "Gaussian") {
-      L = kern_g(err.Y)
-    } 
-    else{
-      if(kernel.y == "linear") {
-        L = err.Y%*%t(err.Y)
-      }
+      if (kernel.y == "Gaussian") { L = kern_g(err.Y) } 
+      if(kernel.y == "linear") { L = err.Y%*%t(err.Y) }
     }
   }
+
   
   H=I.n-I.1%*%t(I.1)/n
   K=H%*%K%*%H
@@ -193,3 +148,29 @@ inner.KRV <- function(y = NULL, X = NULL, kernel.otu, kernel.y, returnKRV = FALS
   if (returnR2) {R2 = calcRsquared(K, L)} else {R2 = NULL}
   return(list(pv = pv, KRV = Fstar, R2 = R2))
 }
+
+
+
+
+## A toy function to calculate a Gaussian kernel matrix
+kern_g = function(zz){
+  n=nrow(zz)
+  D=matrix(nrow=n, ncol=n)  ## the pairwise distance matrix
+  for(i in 1:n){
+    for(j in 1:n){
+      D[i,j]=sum((zz[i,]-zz[j,])^2)
+    }}	
+  temp=c(D)
+  D1=temp[temp>0]
+  scl=median(D1)   ## use the median distance as the bandwidth
+  K=matrix(nrow=n,ncol=n)
+  for(i in 1:n){
+    for(j in 1:n){
+      K[i,j]=exp(-sum((zz[i,]-zz[j,])^2)/scl)
+    }}		
+  return(K)
+}
+
+
+
+

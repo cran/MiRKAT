@@ -100,12 +100,26 @@ G = mvrnorm(n, rep(0, 2*n), Va)
 
 ## -----------------------------------------------------------------------------
 lin.K.y = G %*% t(G)
+
+## Unadjusted
 KRV(kernels.otu = Ks, kernel.y = lin.K.y, 
-    omnibus = "kernel_om", 
+    omnibus = "kernel_om", adjust.type = NULL, 
+    returnKRV = TRUE, returnR2 = TRUE)
+
+## Adjusting both 
+KRV(kernels.otu = Ks, kernel.y = lin.K.y, 
+    X = cbind(Male, anti), 
+    omnibus = "kernel_om", adjust.type = "both", 
     returnKRV = TRUE, returnR2 = TRUE)
 
 ## -----------------------------------------------------------------------------
-KRV(y = G, X = cbind(Male, anti), kernels.otu = Ks, kernel.y = "linear")
+## Adjust both kernel matrices
+KRV(y = G, X = cbind(Male, anti), adjust.type = "both", 
+    kernels.otu = Ks, kernel.y = "linear")
+
+## Adjust phenotype only
+KRV(y = G, X = cbind(Male, anti), adjust.type = "phenotype", 
+    kernels.otu = Ks, kernel.y = "Gaussian")
 
 ## -----------------------------------------------------------------------------
 y <- rchisq(nrow(K.weighted), 1)
