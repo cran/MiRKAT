@@ -5,6 +5,7 @@ inner.MiRKATS <- function(obstime, delta, covar, K, beta=NULL, perm=FALSE, nperm
     n = length(obstime)
     U = obstime[ord]
     D = delta[ord]
+    K = K[ord, ord] 
     if(!is.null(covar)){ X = as.matrix(as.matrix(covar, nrow=n)[ord,], nrow=n) } else { X = NULL }
     
     ftimes <- sort(U[D==1])     # failure times (i.e., event observed)
