@@ -67,6 +67,7 @@
 #'@examples         
 #'library(GUniFrac)
 #'library(MASS)
+#'library(vegan)
 #'
 #'data(throat.tree)
 #'data(throat.otu.tab)

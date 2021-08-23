@@ -64,6 +64,7 @@
 #'###################################
 #'# Generate data
 #'library(GUniFrac)
+#'library(vegan)
 #'
 #'# Throat microbiome data
 #'data(throat.tree)

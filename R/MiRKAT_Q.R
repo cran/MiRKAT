@@ -29,11 +29,11 @@
 #'@importFrom quantreg rq
 #'
 #'@examples     
+#'library(GUniFrac)
 #'library(quantreg)
 #'library(vegan) 
 #'
 #'# Generate data
-#'library(GUniFrac)
 #'data(throat.tree)
 #'data(throat.otu.tab)
 #'data(throat.meta)
