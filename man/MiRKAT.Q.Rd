@@ -39,11 +39,11 @@ Missing data is not permitted. Please remove all individuals with missing y, X, 
 }
 \examples{
     
+library(GUniFrac)
 library(quantreg)
 library(vegan) 
 
 # Generate data
-library(GUniFrac)
 data(throat.tree)
 data(throat.otu.tab)
 data(throat.meta)

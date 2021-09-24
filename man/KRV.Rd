@@ -79,6 +79,7 @@ entered) prior to analysis.
         
 library(GUniFrac)
 library(MASS)
+library(vegan)
 
 data(throat.tree)
 data(throat.otu.tab)

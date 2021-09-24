@@ -37,6 +37,8 @@ inverting the characteristic function of the mixture chisq.
 \examples{
  
 library(GUniFrac)
+library(vegan) 
+
 data(throat.tree)
 data(throat.otu.tab)
 data(throat.meta)

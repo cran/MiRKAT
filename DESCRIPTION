@@ -1,42 +1,44 @@
 Package: MiRKAT
 Title: Microbiome Regression-Based Analysis Tests
-Version: 1.1.5
+Version: 1.2.1
 Authors@R: c(person("Anna", "Plantinga", role = c("aut", "cre"), email = "amp9@williams.edu"),
              person("Nehemiah", "Wilson", role = c("aut", "ctb")),
              person("Haotian", "Zheng", role = c("aut", "ctb")),
+             person("Tianying", "Wang", role = c("aut", "ctb")), 
              person("Xiang", "Zhan", role = c("aut", "ctb")),
              person("Michael", "Wu", role = "aut"),
              person("Ni", "Zhao", role = c("aut", "ctb")),
-	           person("Jun", "Chen", role = "aut"), 
-	           person("Hongjiao", "Liu", role = c("aut", "ctb")))
+	           person("Jun", "Chen", role = "aut"))
 Maintainer: Anna Plantinga <amp9@williams.edu>
-Description: Test for overall association between microbiome composition data and phenotypes via phylogenetic kernels. 
-  The phenotype can be univariate continuous or binary (Zhao et al. (2015) <doi:10.1016/j.ajhg.2015.04.003>), 
+Description: Test for overall association between microbiome composition data 
+  and phenotypes via phylogenetic kernels. The phenotype can be univariate 
+  continuous or binary (Zhao et al. (2015) <doi:10.1016/j.ajhg.2015.04.003>), 
   survival outcomes (Plantinga et al. (2017) <doi:10.1186/s40168-017-0239-9>), 
   multivariate (Zhan et al. (2017) <doi:10.1002/gepi.22030>) and 
   structured phenotypes (Zhan et al. (2017) <doi:10.1111/biom.12684>). 
-  The package can also use robust and quantile regression (unpublished work).  
-  In each case, the microbiome community effect is modeled nonparametrically through a kernel function, 
-  which can incorporate phylogenetic tree information. 
-Depends: R (>= 3.5.0)
+  The package can also use robust regression (unpublished work) and 
+  integrated quantile regression (Wang et al. (2021) <doi:10.1093/bioinformatics/btab668>). 
+  In each case, the microbiome community effect is modeled nonparametrically 
+  through a kernel function, which can incorporate phylogenetic tree information. 
+Depends: R (>= 3.0.2)
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 NeedsCompilation: no
 Imports: MASS, CompQuadForm, quantreg, GUniFrac, PearsonDS, lme4,
         Matrix, permute, mixtools, survival, stats
 Suggests: knitr, propr, cluster, dirmult, vegan, rmarkdown, tidyverse,
         kableExtra
 VignetteBuilder: knitr, rmarkdown
-Packaged: 2021-08-23 13:10:58 UTC; anna
+Packaged: 2021-09-24 13:52:32 UTC; anna
 Author: Anna Plantinga [aut, cre],
   Nehemiah Wilson [aut, ctb],
   Haotian Zheng [aut, ctb],
+  Tianying Wang [aut, ctb],
   Xiang Zhan [aut, ctb],
   Michael Wu [aut],
   Ni Zhao [aut, ctb],
-  Jun Chen [aut],
-  Hongjiao Liu [aut, ctb]
+  Jun Chen [aut]
 Repository: CRAN
-Date/Publication: 2021-08-23 14:00:15 UTC
+Date/Publication: 2021-09-24 16:30:02 UTC

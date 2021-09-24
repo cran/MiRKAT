@@ -72,6 +72,7 @@ The Efron approximation is used for tied survival times.
 ###################################
 # Generate data
 library(GUniFrac)
+library(vegan)
 
 # Throat microbiome data
 data(throat.tree)
