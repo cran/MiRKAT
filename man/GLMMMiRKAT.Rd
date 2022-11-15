@@ -71,7 +71,6 @@ an omnibus p-value is computed via permutation.
 }
 \examples{
 
-library(vegan) 
 
 ## Example with Gaussian (e.g., body mass index) traits
 ## For non-Gaussian traits, see vignette. 
@@ -81,16 +80,22 @@ data(nordata)
 otu.tab <- nordata$nor.otu.tab
 meta <- nordata$nor.meta
 
-# Create kernel matrices
-# could use phylogenetic kernels as below; computation time is slightly higher
-# tree <- nordata$nor.tree
-# unifracs <- GUniFrac::GUniFrac(otu.tab, tree, alpha=c(1))$unifracs
-D_BC = as.matrix(vegdist(otu.tab, 'bray'))
-K_BC = D2K(D_BC)
-
-# Run GLMM-MiRKAT
-GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, 
+# Create kernel matrices and run analysis 
+if (requireNamespace("vegan")) {
+ library(vegan)
+ D_BC = as.matrix(vegdist(otu.tab, 'bray'))
+ K_BC = D2K(D_BC)
+ GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, 
           Ks = K_BC, model = "gaussian", nperm = 500)
+} else {
+# Computation time is longer for phylogenetic kernels 
+ tree <- nordata$nor.tree
+ unifracs <- GUniFrac::GUniFrac(otu.tab, tree, alpha=c(1))$unifracs
+ D_W <- unifracs[,,"d_1"] 
+ K_W = D2K(D_W)
+ GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, 
+          Ks = K_W, model = "gaussian", nperm = 500)
+}
 
 }
 \references{

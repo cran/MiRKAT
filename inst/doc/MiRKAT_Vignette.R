@@ -5,9 +5,9 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(MiRKAT, quietly = TRUE)
 library(GUniFrac, quietly = TRUE)
 library(vegan, quietly = TRUE)
-library(cluster); library(CompQuadForm); library(dirmult); library(lme4)
+library(CompQuadForm); library(lme4); library(tidyverse) 
 library(MASS); library(Matrix); library(survival); library(permute)
-library(propr); library(kableExtra)
+library(kableExtra)
 
 ## -----------------------------------------------------------------------------
 data("throat.otu.tab")
@@ -26,14 +26,22 @@ covar <- cbind(Male, anti)
 unifracs <- GUniFrac(throat.otu.tab, throat.tree, alpha = c(0, 0.5, 1))$unifracs
 D.weighted = unifracs[,,"d_1"]
 D.unweighted = unifracs[,,"d_UW"]
-D.generalized = unifracs[,,"d_0.5"]
-D.BC = as.matrix(vegdist(throat.otu.tab, method="bray"))
+D.generalized = unifracs[,,"d_0.5"] 
+
+if(requireNamespace("vegan")) {
+  D.BC = as.matrix(vegdist(throat.otu.tab, method="bray"))
+}
+
 
 ## -----------------------------------------------------------------------------
 K.weighted = D2K(D.weighted)
 K.unweighted = D2K(D.unweighted)
 K.generalized = D2K(D.generalized)
-K.BC = D2K(D.BC)
+
+if(requireNamespace("vegan")) {
+  K.BC = D2K(D.BC)
+}
+
 
 ## -----------------------------------------------------------------------------
 MiRKAT(y = Smoker, X = covar, Ks = K.weighted, out_type = "D", 
@@ -48,11 +56,22 @@ mytab[4,] = c("Generalized UniFrac", "Yes", "(Yes)", "Parameter alpha defines ex
 mytab[5,] = c("Jaccard", "No", "No", "1 - (taxa in both)/(taxa in either); typically presence/absence, but can be extended to an abundance-weighted version", "4,5") 
 mytab[6,] = c("Bray-Curtis", "No", "Yes", "Similar to Jaccard, but uses counts", "6")
 
-kable(mytab, booktabs=TRUE) %>% 
-  column_spec(4, width="20em") 
+if(requireNamespace("kableExtra") & requireNamespace("tidyverse")) {
+  kable(mytab, booktabs=TRUE) %>% 
+    column_spec(4, width="20em") 
+} else {
+  mytab 
+}
+
 
 ## -----------------------------------------------------------------------------
-Ks = list(K.weighted = K.weighted, K.unweighted = K.unweighted, K.BC = K.BC)
+if(requireNamespace("vegan")) {
+  Ks = list(K.weighted = K.weighted, K.unweighted = K.unweighted, K.BC = K.BC)
+} else {
+  Ks = list(K.weighted = K.weighted, K.unweighted = K.unweighted)
+}
+
+
 MiRKAT(y = Smoker, Ks = Ks, X = covar, out_type = "D", 
        method = "davies", omnibus = "permutation", 
        returnKRV = TRUE, returnR2 = TRUE)
@@ -155,7 +174,7 @@ Ks <- list(K.weighted = K.weighted,
 ## -----------------------------------------------------------------------------
 # GLMM-MiRKAT with computational p-values (Davies + Cauchy combination test)
 GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, Ks = Ks, 
-           model = "gaussian", method = "davies", omnibus = "perm")
+           model = "gaussian", method = "davies", omnibus = "Cauchy")
 
 # GLMM-MiRKAT with permutation test
 GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, Ks = Ks, 

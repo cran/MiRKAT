@@ -24,7 +24,6 @@ Integrated quantile regression-based kernel association test.
 \examples{
 
 library(GUniFrac)
-library(vegan)
 library(quantreg)
 library(PearsonDS)
 library(MiRKAT)
@@ -34,8 +33,13 @@ data(throat.otu.tab)
 
 ## Create UniFrac and Bray-Curtis distance matrices 
 unifracs = GUniFrac(throat.otu.tab, throat.tree, alpha = c(1))$unifracs
-Ds = list(w = unifracs[,,"d_1"], uw = unifracs[,,"d_UW"],
-         BC= as.matrix(vegdist(throat.otu.tab, method="bray")))
+if (requireNamespace("vegan")) {
+ library(vegan)
+ BC= as.matrix(vegdist(throat.otu.tab, method="bray"))
+ Ds = list(w = unifracs[,,"d_1"], uw = unifracs[,,"d_UW"], BC = BC)
+} else {
+ Ds = list(w = unifracs[,,"d_1"], uw = unifracs[,,"d_UW"])
+}
 
 ## Convert to kernels           
 Ks = lapply(Ds, FUN = function(d) D2K(d))

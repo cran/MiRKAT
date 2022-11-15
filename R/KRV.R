@@ -67,7 +67,6 @@
 #'@examples         
 #'library(GUniFrac)
 #'library(MASS)
-#'library(vegan)
 #'
 #'data(throat.tree)
 #'data(throat.otu.tab)
@@ -90,11 +89,15 @@
 #' # Distance matrices
 #' D.weighted = unifracs[,,"d_1"]
 #' D.unweighted = unifracs[,,"d_UW"]
-#' D.BC= as.matrix(vegdist(otu.tab.rff , method="bray"))
 #' # Kernel matrices 
 #' K.weighted = D2K(D.weighted)
 #' K.unweighted = D2K(D.unweighted)
-#' K.BC = D2K(D.BC)
+#' 
+#' if (requireNamespace("vegan")) {
+#'  library(vegan)
+#'  D.BC = as.matrix(vegdist(otu.tab.rff, method="bray"))
+#'  K.BC = D2K(D.BC)
+#'} 
 #'
 #' # Simulate phenotype data 
 #' rho = 0.2
@@ -114,11 +117,13 @@
 #' ## Adjusted analysis (phenotype only)
 #' KRV(kernels.otu = K.weighted, y = Phe, kernel.y = "linear", X = cova, adjust.type = "phenotype")
 #' 
-#' ## Adjusted analysis (adjust both kernels; microbiome and phenotype) 
-#' KRV(kernels.otu = K.BC, kernel.y = K.y, X = cova, adjust.type='both')
+#' if (requireNamespace("vegan")) {
+#'   ## Adjusted analysis (adjust both kernels; microbiome and phenotype) 
+#'   KRV(kernels.otu = K.BC, kernel.y = K.y, X = cova, adjust.type='both')
 #' 
-#' ## Adjusted analysis (adjust both kernels; microbiome and genotype)
-#' KRV(kernels.otu = K.BC, kernel.y = K.g, X = cova, adjust.type='both')
+#'   ## Adjusted analysis (adjust both kernels; microbiome and genotype)
+#'   KRV(kernels.otu = K.BC, kernel.y = K.g, X = cova, adjust.type='both')
+#' }
 #'
 #'
 #'@export 

@@ -33,7 +33,7 @@
 #'@importFrom mixtools matsqrt
 #'@examples  
 #'library(GUniFrac)
-#'library(vegan) 
+#'if(requireNamespace("vegan")) { library(vegan) }
 #'
 #'data(throat.tree)
 #'data(throat.otu.tab)
@@ -41,8 +41,12 @@
 #'
 #'unifracs <- GUniFrac(throat.otu.tab, throat.tree, alpha=c(0, 0.5, 1))$unifracs
 #'
-#'Ds = list(w = unifracs[,,"d_1"], u = unifracs[,,"d_UW"], 
-#'          BC= as.matrix(vegdist(throat.otu.tab , method="bray"))) 
+#'if(requireNamespace("vegan")) {
+#'  BC= as.matrix(vegdist(throat.otu.tab , method="bray"))
+#'  Ds = list(w = unifracs[,,"d_1"], u = unifracs[,,"d_UW"], BC = BC) 
+#'} else {
+#'  Ds = list(w = unifracs[,,"d_1"], u = unifracs[,,"d_UW"]) 
+#'}
 #'Ks = lapply(Ds, FUN = function(d) D2K(d)) 
 #'
 #'n = nrow(throat.otu.tab)

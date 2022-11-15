@@ -1,6 +1,6 @@
 Package: MiRKAT
 Title: Microbiome Regression-Based Analysis Tests
-Version: 1.2.1
+Version: 1.2.2
 Authors@R: c(person("Anna", "Plantinga", role = c("aut", "cre"), email = "amp9@williams.edu"),
              person("Nehemiah", "Wilson", role = c("aut", "ctb")),
              person("Haotian", "Zheng", role = c("aut", "ctb")),
@@ -20,7 +20,7 @@ Description: Test for overall association between microbiome composition data
   integrated quantile regression (Wang et al. (2021) <doi:10.1093/bioinformatics/btab668>). 
   In each case, the microbiome community effect is modeled nonparametrically 
   through a kernel function, which can incorporate phylogenetic tree information. 
-Depends: R (>= 3.0.2)
+Depends: R (>= 3.1.0)
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
@@ -28,10 +28,9 @@ RoxygenNote: 7.1.2
 NeedsCompilation: no
 Imports: MASS, CompQuadForm, quantreg, GUniFrac, PearsonDS, lme4,
         Matrix, permute, mixtools, survival, stats
-Suggests: knitr, propr, cluster, dirmult, vegan, rmarkdown, tidyverse,
-        kableExtra
+Suggests: knitr, vegan, rmarkdown, tidyverse, kableExtra
 VignetteBuilder: knitr, rmarkdown
-Packaged: 2021-09-24 13:52:32 UTC; anna
+Packaged: 2022-11-13 21:06:01 UTC; anna
 Author: Anna Plantinga [aut, cre],
   Nehemiah Wilson [aut, ctb],
   Haotian Zheng [aut, ctb],
@@ -41,4 +40,4 @@ Author: Anna Plantinga [aut, cre],
   Ni Zhao [aut, ctb],
   Jun Chen [aut]
 Repository: CRAN
-Date/Publication: 2021-09-24 16:30:02 UTC
+Date/Publication: 2022-11-15 21:00:05 UTC

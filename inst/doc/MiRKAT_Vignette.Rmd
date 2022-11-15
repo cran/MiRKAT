@@ -19,22 +19,22 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(MiRKAT, quietly = TRUE)
 library(GUniFrac, quietly = TRUE)
 library(vegan, quietly = TRUE)
-library(cluster); library(CompQuadForm); library(dirmult); library(lme4)
+library(CompQuadForm); library(lme4); library(tidyverse) 
 library(MASS); library(Matrix); library(survival); library(permute)
-library(propr); library(kableExtra)
+library(kableExtra)
 ``` 
 
 ## Overview
 
-The MiRKAT package (v1.1.0) contains functions that test global associations between the microbiota and different types of phenotypes, such as univariate continuous or binary phenotypes, survival (censored time-to-event) outcomes, longitudinal data, multivariate, and structured phenotypes. For all these effects, the microbiome community effect is modeled nonparametrically through a kernel function, which can incorporate the phylogenetic tree information.
+The MiRKAT package (v1.2.1) contains functions that test global associations between the microbiota and different types of phenotypes, such as univariate continuous or binary phenotypes, survival (censored time-to-event) outcomes, longitudinal data, multivariate, and structured phenotypes. For all these effects, the microbiome community effect is modeled nonparametrically through a kernel function, which can incorporate the phylogenetic tree information.
 
-### Changes from v1.0.1
+### Changes from v1.1.0
 
-Four additional functions have beeen added to the package in version 1.1.0. They are MiRKAT.R (robust linear regression), MiRKAT.Q (quantile regression), GLMMMiRKAT (for correlated outcome data), and CSKAT (an alternative to GLMMMiRKAT for correlated Gaussian outcomes, utilizing the Davies approximation to calculate the p-value computationally). In addition, measures of effect size (the KRV statistic and R-squared) have been added to most functions. 
+One additional function (MiRKAT.iQ), an integrated quantile regression-based kernel association test, has been added in version 1.2.1. 
 
 ### Dependencies 
 
-The following packages are required for functions and examples in the MiRKAT package: MASS, GUniFrac, CompQuadForm, quantreg, PearsonDS, propr, lme4, Matrix, permute, survival, and stats. All of these required packages are available on CRAN. 
+The following packages are required for functions and examples in the MiRKAT package: MASS, GUniFrac, CompQuadForm, quantreg, PearsonDS, lme4, Matrix, permute, survival, and stats. All of these required packages are available on CRAN. 
 
 ## MiRKAT: Microbiome Regression-Based Kernel Association Test
 
@@ -67,8 +67,12 @@ covar <- cbind(Male, anti)
 unifracs <- GUniFrac(throat.otu.tab, throat.tree, alpha = c(0, 0.5, 1))$unifracs
 D.weighted = unifracs[,,"d_1"]
 D.unweighted = unifracs[,,"d_UW"]
-D.generalized = unifracs[,,"d_0.5"]
-D.BC = as.matrix(vegdist(throat.otu.tab, method="bray"))
+D.generalized = unifracs[,,"d_0.5"] 
+
+if(requireNamespace("vegan")) {
+  D.BC = as.matrix(vegdist(throat.otu.tab, method="bray"))
+}
+
 ```
 
 ### Convert Distance to Kernel Matrices
@@ -81,7 +85,11 @@ Here, $I$ is the identity matrix and $1$ is an $n$-vector of ones. To ensure tha
 K.weighted = D2K(D.weighted)
 K.unweighted = D2K(D.unweighted)
 K.generalized = D2K(D.generalized)
-K.BC = D2K(D.BC)
+
+if(requireNamespace("vegan")) {
+  K.BC = D2K(D.BC)
+}
+
 ```
 
 ### Testing Using a Single Kernel
@@ -112,8 +120,13 @@ mytab[4,] = c("Generalized UniFrac", "Yes", "(Yes)", "Parameter alpha defines ex
 mytab[5,] = c("Jaccard", "No", "No", "1 - (taxa in both)/(taxa in either); typically presence/absence, but can be extended to an abundance-weighted version", "4,5") 
 mytab[6,] = c("Bray-Curtis", "No", "Yes", "Similar to Jaccard, but uses counts", "6")
 
-kable(mytab, booktabs=TRUE) %>% 
-  column_spec(4, width="20em") 
+if(requireNamespace("kableExtra") & requireNamespace("tidyverse")) {
+  kable(mytab, booktabs=TRUE) %>% 
+    column_spec(4, width="20em") 
+} else {
+  mytab 
+}
+
 ```
 \begin{tabu} to \hsize{X[0.4,c]X[0.4,c]X[0.5,c]XX[0.4,c]}
 \toprule
@@ -137,7 +150,13 @@ We provide an omnibus test that takes into account multiple kernels simultaneous
   
 
 ```{r}
-Ks = list(K.weighted = K.weighted, K.unweighted = K.unweighted, K.BC = K.BC)
+if(requireNamespace("vegan")) {
+  Ks = list(K.weighted = K.weighted, K.unweighted = K.unweighted, K.BC = K.BC)
+} else {
+  Ks = list(K.weighted = K.weighted, K.unweighted = K.unweighted)
+}
+
+
 MiRKAT(y = Smoker, Ks = Ks, X = covar, out_type = "D", 
        method = "davies", omnibus = "permutation", 
        returnKRV = TRUE, returnR2 = TRUE)
@@ -327,7 +346,7 @@ GLMM-MiRKAT returns kernel-specific and omnibus p-values. No measures of effect 
 ```{r}
 # GLMM-MiRKAT with computational p-values (Davies + Cauchy combination test)
 GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, Ks = Ks, 
-           model = "gaussian", method = "davies", omnibus = "perm")
+           model = "gaussian", method = "davies", omnibus = "Cauchy")
 
 # GLMM-MiRKAT with permutation test
 GLMMMiRKAT(y = meta$y, X = cbind(meta$x1, meta$x2), id = meta$id, Ks = Ks, 
