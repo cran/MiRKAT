@@ -1,6 +1,6 @@
 Package: MiRKAT
-Title: Microbiome Regression-Based Analysis Tests
-Version: 1.2.2
+Title: Microbiome Regression-Based Kernel Association Tests
+Version: 1.2.3
 Authors@R: c(person("Anna", "Plantinga", role = c("aut", "cre"), email = "amp9@williams.edu"),
              person("Nehemiah", "Wilson", role = c("aut", "ctb")),
              person("Haotian", "Zheng", role = c("aut", "ctb")),
@@ -24,13 +24,13 @@ Depends: R (>= 3.1.0)
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 NeedsCompilation: no
 Imports: MASS, CompQuadForm, quantreg, GUniFrac, PearsonDS, lme4,
         Matrix, permute, mixtools, survival, stats
-Suggests: knitr, vegan, rmarkdown, tidyverse, kableExtra
+Suggests: knitr, vegan, rmarkdown, magrittr, kableExtra
 VignetteBuilder: knitr, rmarkdown
-Packaged: 2022-11-13 21:06:01 UTC; anna
+Packaged: 2023-02-15 23:09:07 UTC; anna
 Author: Anna Plantinga [aut, cre],
   Nehemiah Wilson [aut, ctb],
   Haotian Zheng [aut, ctb],
@@ -40,4 +40,4 @@ Author: Anna Plantinga [aut, cre],
   Ni Zhao [aut, ctb],
   Jun Chen [aut]
 Repository: CRAN
-Date/Publication: 2022-11-15 21:00:05 UTC
+Date/Publication: 2023-02-17 14:50:02 UTC

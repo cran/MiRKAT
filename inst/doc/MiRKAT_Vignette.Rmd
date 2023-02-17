@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(MiRKAT, quietly = TRUE)
 library(GUniFrac, quietly = TRUE)
 library(vegan, quietly = TRUE)
-library(CompQuadForm); library(lme4); library(tidyverse) 
+library(CompQuadForm); library(lme4); library(magrittr)
 library(MASS); library(Matrix); library(survival); library(permute)
 library(kableExtra)
 ``` 
@@ -120,7 +120,7 @@ mytab[4,] = c("Generalized UniFrac", "Yes", "(Yes)", "Parameter alpha defines ex
 mytab[5,] = c("Jaccard", "No", "No", "1 - (taxa in both)/(taxa in either); typically presence/absence, but can be extended to an abundance-weighted version", "4,5") 
 mytab[6,] = c("Bray-Curtis", "No", "Yes", "Similar to Jaccard, but uses counts", "6")
 
-if(requireNamespace("kableExtra") & requireNamespace("tidyverse")) {
+if(requireNamespace("kableExtra") & requireNamespace("magrittr")) {
   kable(mytab, booktabs=TRUE) %>% 
     column_spec(4, width="20em") 
 } else {

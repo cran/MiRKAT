@@ -849,7 +849,7 @@ Cauchy combination test (weighting all kernels equally).</p>
 ##  0.005306786  0.003801015  0.002287489 
 ## 
 ## $omnibus_p
-## [1] 0.011
+## [1] 0.0075
 ## 
 ## $KRV
 ##   K.weighted K.unweighted         K.BC 
@@ -878,18 +878,18 @@ below.</p>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">method =</span> <span class="st">&quot;davies&quot;</span>, <span class="at">omnibus =</span> <span class="st">&quot;cauchy&quot;</span>, <span class="at">returnKRV =</span> <span class="cn">TRUE</span>, <span class="at">returnR2 =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## $p_values
 ##   K.weighted K.unweighted         K.BC 
-##    0.6578367    0.5912145    0.8011834 
+##    0.6640013    0.7985788    0.8794585 
 ## 
 ## $omnibus_p
-## [1] 0.702978
+## [1] 0.8109553
 ## 
 ## $KRV
 ##   K.weighted K.unweighted         K.BC 
-## 0.0007495959 0.0006680155 0.0001768607 
+## 0.0008509112 0.0005672828 0.0001621036 
 ## 
 ## $R2
 ##   K.weighted K.unweighted         K.BC 
-##  0.001187321  0.007474732  0.001933579</code></pre>
+##  0.001529968  0.005390411  0.001624367</code></pre>
 <p>This function outputs p-values for association using each single
 kernel and an omnibus p-value considering all kernels. The omnibus
 p-value is obtained through residual permutation where the minimum
@@ -937,18 +937,18 @@ microbiome.</p>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">perm =</span> F, <span class="at">omnibus =</span> <span class="st">&quot;cauchy&quot;</span>, <span class="at">returnKRV =</span> T, <span class="at">returnR2 =</span> T)</span></code></pre></div>
 <pre><code>## $p_values
 ##   K.weighted K.unweighted         K.BC 
-##    0.7659192    0.5528894    0.9597768 
+##    0.4687006    0.3658690    0.2334753 
 ## 
 ## $omnibus_p
-## [1] 0.8990951
+## [1] 0.339411
 ## 
 ## $KRV
 ##   K.weighted K.unweighted         K.BC 
-## 0.0007273783 0.0005514495 0.0001271282 
+## 0.0005903327 0.0006214442 0.0002618715 
 ## 
 ## $R2
 ##   K.weighted K.unweighted         K.BC 
-##  0.001117981  0.005093709  0.000999040</code></pre>
+## 0.0007363894 0.0064688465 0.0042391164</code></pre>
 <p>Using “perm = T” indicates that a permutation p-value should be
 calculated for each kernel-specific test. Overall, permutation is
 recommended when the sample size is small, as Davies’ method may be
@@ -960,18 +960,18 @@ of permutations to perform to generate the p-value (default = 1000).</p>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">perm =</span> T, <span class="at">omnibus =</span> <span class="st">&quot;cauchy&quot;</span>, <span class="at">returnKRV =</span> T, <span class="at">returnR2 =</span> T)</span></code></pre></div>
 <pre><code>## $p_values
 ##   K.weighted K.unweighted         K.BC 
-##    0.7807808    0.5665666    0.9679680 
+##    0.5765766    0.4154154    0.3003003 
 ## 
 ## $omnibus_p
-## [1] 0.9176127
+## [1] 0.4218266
 ## 
 ## $KRV
 ##   K.weighted K.unweighted         K.BC 
-## 0.0007273783 0.0005514495 0.0001271282 
+## 0.0005903327 0.0006214442 0.0002618715 
 ## 
 ## $R2
 ##   K.weighted K.unweighted         K.BC 
-##  0.001117981  0.005093709  0.000999040</code></pre>
+## 0.0007363894 0.0064688465 0.0042391164</code></pre>
 <p>As above, the omnibus p-value may be generated either using residual
 permutation to create a null distribution of minimum p-values, and the
 minimum p-value from the original MiRKAT-S analysis is tested against

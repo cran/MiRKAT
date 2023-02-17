@@ -1,4 +1,4 @@
-599202849684be84693b16dc78f695c8 *DESCRIPTION
+de680c70aad0548227e637c0839b1eae *DESCRIPTION
 0dfae449a9fc0d31540a4a74198077b3 *NAMESPACE
 d25793b0a0896195707281d5f2d8de6f *R/CSKAT.R
 647ff30d0667ee1ac12e356a87d0a6a8 *R/CSKAT_helper.R
@@ -33,9 +33,9 @@ fcde8edb7ee43fd80ec3035c109d1b67 *data/poisdata.rda
 1284c14bab12977d160cb96aa8e817e2 *data/throat.meta.rda
 68ce0e0b4bb56e5d5926c381f4256618 *data/throat.otu.tab.rda
 a959ac0a0089ce84acec34f8fd3fcfe6 *data/throat.tree.rda
-1a39252e36c6edb4d56de65ec6e73fea *inst/doc/MiRKAT_Vignette.R
-c69709d44cfc1b09c23d625490f9b260 *inst/doc/MiRKAT_Vignette.Rmd
-b83d2944a79437af294f39584b1693e7 *inst/doc/MiRKAT_Vignette.html
+009c1b9792764e029250db65a5af58a1 *inst/doc/MiRKAT_Vignette.R
+ebe08ec4fa695036f045c197767aaa40 *inst/doc/MiRKAT_Vignette.Rmd
+3fc9c8c403d29e0aa0f08ad5038a285b *inst/doc/MiRKAT_Vignette.html
 e8b0bda0dd1474a76dfb6ac71dca1b9b *man/CSKAT.Rd
 4a279eca413a93fb4d25574eb5fa72f6 *man/D2K.Rd
 9d7a38054c8369cb8b8c0c076790d627 *man/GLMMMiRKAT.Rd
@@ -56,4 +56,4 @@ d6dc53e5999bdbb25d43627ae192f03b *man/poisdata.Rd
 c3be2c54a51562f1e55275f3a6cbc974 *man/throat.meta.Rd
 d18b37ac84823a3a277caf9287ef859d *man/throat.otu.tab.Rd
 67e0baf6d09e218b7a0c499d18ea32fc *man/throat.tree.Rd
-c69709d44cfc1b09c23d625490f9b260 *vignettes/MiRKAT_Vignette.Rmd
+ebe08ec4fa695036f045c197767aaa40 *vignettes/MiRKAT_Vignette.Rmd
